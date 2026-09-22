@@ -1,0 +1,2223 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#b23a48">
+<title>مدیریت کارگاه سوسیس و کالباس</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f3f5f2; --surface:#ffffff; --surface-2:#f7f9f7; --ink:#16262b; --muted:#5d7076; --line:#dde5e1; --line-strong:#c2cfca;
+  --brand:#a8303d; --brand-strong:#872530; --on-brand:#ffffff; --brand-soft:#f9e6e8;
+  --tag:#f5c94a; --tag-ink:#3a2c00;
+  --ok:#23764f; --ok-soft:#dcf1e6; --warn:#94550a; --warn-soft:#fcebd0; --info:#1c5c96; --info-soft:#dbeaf8; --danger:#b3261e;
+  --awn2:#ffffff; --tile:rgba(22,38,43,.05);
+  --shadow:0 1px 2px rgba(20,40,45,.05),0 10px 26px -14px rgba(20,40,45,.22);
+  --font:"Vazirmatn",Tahoma,"Segoe UI",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#101a1d; --surface:#172226; --surface-2:#1c292d; --ink:#e9f0ee; --muted:#98adb2; --line:#2a3a3e; --line-strong:#3b4f54;
+    --brand:#e5717d; --brand-strong:#f2939c; --on-brand:#2b0d12; --brand-soft:#3b2227;
+    --tag:#e8bc3f; --tag-ink:#2c2100;
+    --ok:#63c793; --ok-soft:#1c3328; --warn:#e8b154; --warn-soft:#37290f; --info:#86bdf0; --info-soft:#1b2d3d; --danger:#ff8f85;
+    --awn2:#2b3b3f; --tile:rgba(255,255,255,.035);
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 26px -14px rgba(0,0,0,.6);
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:var(--font);color:var(--ink);font-size:15px;line-height:1.75;-webkit-text-size-adjust:100%;
+  padding-top:env(safe-area-inset-top,0px);
+  background-color:var(--bg);
+  background-image:linear-gradient(var(--tile) 1px,transparent 1px),linear-gradient(90deg,var(--tile) 1px,transparent 1px);
+  background-size:48px 24px}
+button,input,select,textarea{font:inherit;color:inherit}
+h1,h2,h3,h4{margin:0;line-height:1.4}
+a{color:var(--brand-strong)}
+:focus-visible{outline:3px solid var(--brand);outline-offset:2px}
+
+/* awning: the shop-front stripe */
+.awning{height:24px;
+  background:
+    radial-gradient(circle at 11px 12px,var(--brand) 11px,transparent 11.6px) 0 0/44px 24px repeat-x,
+    radial-gradient(circle at 33px 12px,var(--awn2) 11px,transparent 11.6px) 0 0/44px 24px repeat-x,
+    repeating-linear-gradient(90deg,var(--brand) 0 22px,var(--awn2) 22px 44px) 0 0/100% 12px no-repeat;
+  filter:drop-shadow(0 2px 2px rgba(20,40,45,.14))}
+
+/* shell */
+.shell{min-height:100vh}
+.brand{max-width:760px;margin:0 auto;padding:12px 16px 2px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brandbtn{display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;text-align:right;cursor:pointer;min-width:0}
+.logo{width:46px;height:46px;border-radius:50%;flex:none;object-fit:cover;background:var(--surface);box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--line-strong)}
+svg.logo{background:none;box-shadow:none}
+.bname{display:block;font-weight:800;font-size:19px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:60vw}
+.bslogan{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;font-size:12.5px;color:var(--muted);line-height:1.4;overflow:hidden;white-space:normal;max-width:60vw}
+.mode{font-size:12px;background:var(--warn-soft);color:var(--warn);padding:2px 10px;border-radius:99px;white-space:nowrap}
+.wrap{max-width:760px;margin:0 auto;padding:12px 16px 120px}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;
+  background:color-mix(in srgb,var(--surface) 93%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  border-top:1px solid var(--line);padding:4px 2px calc(4px + env(safe-area-inset-bottom,0px))}
+nav.tabs button{flex:1;min-width:0;border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:1px;
+  font-size:11.5px;color:var(--muted);cursor:pointer;padding:2px 0}
+.tabs .ic{display:grid;place-items:center;width:48px;height:28px;border-radius:14px;transition:background .15s,color .15s}
+.tabs button.on{color:var(--brand);font-weight:700}
+.tabs button.on .ic{background:var(--brand-soft)}
+.tabs .wide{display:none}
+svg.i{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+@media(min-width:900px){
+  .shell{display:grid;grid-template-columns:236px minmax(0,1fr);grid-template-areas:"brand main" "nav main";grid-template-rows:auto 1fr;
+    column-gap:36px;max-width:1160px;margin:0 auto;padding:0 20px}
+  .brand{grid-area:brand;max-width:none;padding:26px 0 12px}
+  .bname,.bslogan{max-width:170px}
+  nav.tabs{grid-area:nav;position:sticky;top:16px;align-self:start;flex-direction:column;background:none;border:0;
+    -webkit-backdrop-filter:none;backdrop-filter:none;padding:0;gap:2px}
+  nav.tabs button{flex-direction:row;justify-content:flex-start;gap:12px;font-size:15px;padding:10px 12px;border-radius:12px}
+  .tabs .ic{width:auto;height:auto;background:none!important}
+  nav.tabs button:hover{background:var(--surface)}
+  nav.tabs button.on{background:var(--surface);box-shadow:var(--shadow)}
+  .tabs .wide{display:flex}
+  .wrap{grid-area:main;max-width:none;margin:0;padding:26px 0 60px}
+  .mode{display:none}
+}
+
+/* type + forms */
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 14px;flex-wrap:wrap}
+.page-head h2{font-size:21px;font-weight:800}
+.muted{color:var(--muted)}
+.help{font-size:12.5px;color:var(--muted);margin-top:4px}
+label,.lbl{display:block;font-size:13px;font-weight:500;color:var(--muted);margin:14px 0 5px}
+input,select,textarea{width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:9px 13px;min-height:46px;
+  transition:border-color .12s,box-shadow .12s}
+input:focus,select:focus,textarea:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 22%,transparent)}
+input.num{direction:ltr;text-align:right}
+textarea{resize:vertical}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1.5px solid var(--line-strong);background:var(--surface);
+  color:var(--ink);border-radius:12px;padding:8px 18px;min-height:46px;font-weight:700;cursor:pointer;transition:background .12s,transform .05s}
+.btn:hover{background:var(--surface-2)}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.btn.primary:hover{background:var(--brand-strong);border-color:var(--brand-strong)}
+.btn.ghost{border-color:var(--line);font-weight:500}
+.btn.danger{border-color:transparent;color:var(--danger);background:none}
+.btn.dangerfill{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.dangerfill:hover{filter:brightness(.92);background:var(--danger)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.sm{min-height:38px;padding:4px 14px;font-size:13.5px;border-radius:10px}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px}
+.seg{display:flex;background:var(--surface-2);border:1.5px solid var(--line);border-radius:12px;padding:3px;gap:3px;margin-top:12px}
+.seg button{flex:1;border:0;background:none;padding:7px 6px;min-height:40px;cursor:pointer;font-size:13.5px;border-radius:9px;color:var(--muted)}
+.seg button.on{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(20,40,45,.14)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);border-radius:99px;padding:2px 14px;min-height:36px;cursor:pointer;font-size:13.5px}
+.chip:hover{border-color:var(--brand)}
+.chip.on{background:var(--ink);color:var(--surface);border-color:var(--ink);font-weight:700}
+.row2{display:grid;grid-template-columns:1fr 120px;gap:8px}
+
+/* lists */
+.list{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow)}
+.item{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;text-align:right;border:0;background:none;
+  padding:13px 14px;border-bottom:1px solid var(--line);cursor:pointer;border-inline-start:4px solid transparent}
+.item:last-child{border-bottom:0}
+.item:hover{background:var(--surface-2)}
+.item .grow{flex:1;min-width:0}
+.item .name{font-weight:700;font-size:15.5px}
+.item .sub{font-size:12.5px;color:var(--muted);display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom}
+.item.s-new{border-inline-start-color:var(--line-strong)}
+.item.s-producing{border-inline-start-color:var(--warn)}
+.item.s-ready{border-inline-start-color:var(--brand)}
+.item.s-shipped{border-inline-start-color:var(--info)}
+.item.s-delivered{border-inline-start-color:var(--ok)}
+.item.s-canceled{border-inline-start-color:var(--line);opacity:.7}
+.ono{display:inline-block;font-size:12px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);border-radius:6px;padding:0 6px;margin-inline-start:8px;color:var(--muted)}
+.avatar{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:17px;flex:none}
+.av0{background:#f9e6e8;color:#872530}.av1{background:#fcebd0;color:#7a4508}.av2{background:#dcf1e6;color:#1d6a45}
+.av3{background:#dbeaf8;color:#1c5c96}.av4{background:#ece4f6;color:#5b3f8a}.av5{background:#e4ecec;color:#3a5a5f}
+@media(prefers-color-scheme:dark){
+  .av0{background:#3b2227;color:#f2939c}.av1{background:#37290f;color:#e8b154}.av2{background:#1c3328;color:#63c793}
+  .av3{background:#1b2d3d;color:#86bdf0}.av4{background:#2c2440;color:#c0a6ee}.av5{background:#243437;color:#9dc0c5}
+}
+.tag{position:relative;background:var(--tag);color:var(--tag-ink);font-weight:800;padding:1px 12px 1px 12px;padding-inline-start:22px;
+  border-radius:4px 12px 12px 4px;white-space:nowrap;font-size:14px}
+.tag::before{content:"";position:absolute;inset-inline-start:8px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
+  background:var(--surface);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
+.badge{display:inline-block;font-size:12px;padding:0 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
+.badge.ok{background:var(--ok-soft);color:var(--ok)}
+.st{display:inline-block;font-size:12px;padding:0 9px;border-radius:99px;font-weight:500;white-space:nowrap}
+.st-new{background:var(--line);color:var(--ink)}
+.st-producing,.pay-partial{background:var(--warn-soft);color:var(--warn)}
+.st-ready,.pay-unpaid{background:var(--brand-soft);color:var(--brand-strong)}
+.st-shipped{background:var(--info-soft);color:var(--info)}
+.st-delivered,.pay-paid{background:var(--ok-soft);color:var(--ok)}
+.st-canceled{background:var(--line);color:var(--muted);text-decoration:line-through}
+.side{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0}
+.badges{display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.pl{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:2px}
+.prod-actions{display:flex;gap:4px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 4px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 12px;box-shadow:var(--shadow)}
+.kpi b{display:block;font-size:19px;font-weight:800;line-height:1.5}
+.kpi span{font-size:12px;color:var(--muted);line-height:1.4;display:block}
+@media(max-width:480px){.kpi b{font-size:16px}}
+.empty{background:var(--surface);border:1.5px dashed var(--line-strong);border-radius:16px;padding:26px 18px;text-align:center}
+.empty .art{width:64px;height:64px;margin:0 auto 10px;border-radius:50%;background:var(--brand-soft);color:var(--brand);display:grid;place-items:center}
+.empty .art svg{width:30px;height:30px}
+.empty h3{font-size:16.5px;margin-bottom:4px}
+.empty p{margin:0 0 14px;color:var(--muted)}
+.notice{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:10px 14px;margin:12px 0;font-size:13.5px}
+.err{background:var(--brand-soft);color:var(--brand-strong);border-radius:12px;padding:12px 14px;margin:12px 0}
+
+/* panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px 18px;margin-bottom:14px;box-shadow:var(--shadow)}
+.panel h3{font-weight:800}
+.kv{display:grid;grid-template-columns:104px 1fr;gap:4px 10px;font-size:14px;margin:6px 0 0}
+.kv dt{color:var(--muted)} .kv dd{margin:0;min-width:0;overflow-wrap:anywhere}
+.stat{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat>div{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.stat b{display:block;font-size:15.5px}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th,.tbl td{padding:6px 6px;border-bottom:1px solid var(--line);text-align:right}
+.tbl th{font-size:12.5px;color:var(--muted);font-weight:500}
+.tbl td.n{white-space:nowrap}
+details{margin:8px 0}
+summary{cursor:pointer;font-weight:500;font-size:14px;padding:4px 0}
+.profit-pos{color:var(--ok)} .profit-neg{color:var(--danger)}
+
+/* calculator + production ticket */
+.ticket{position:relative;background:var(--surface);padding:22px 20px 18px;margin:18px 0 26px;border-top:5px solid var(--ink);border-radius:6px 6px 0 0;
+  filter:drop-shadow(0 8px 10px rgba(20,40,45,.16))}
+.ticket::after{content:"";position:absolute;left:0;right:0;bottom:-9px;height:9px;
+  background:radial-gradient(circle at 9px 0,var(--surface) 8.4px,transparent 9px) 0 0/18px 9px repeat-x}
+.ticket .stamp{position:absolute;top:16px;inset-inline-end:16px;border:2px solid var(--brand);color:var(--brand);border-radius:6px;padding:0 9px;
+  font-weight:800;font-size:12.5px;transform:rotate(-6deg);opacity:.9}
+.ticket .kicker{font-size:12.5px;color:var(--muted)}
+.ticket .weight{font-size:32px;font-weight:800;line-height:1.3}
+.ticket .pname{font-size:15.5px;font-weight:700}
+.tear{border-top:2px dashed var(--line-strong);margin:12px -20px}
+.line{display:flex;align-items:baseline;gap:8px;padding:3px 0}
+.line .fill{flex:1;border-bottom:1.5px dotted var(--line-strong);transform:translateY(-4px);min-width:12px}
+.line .amt{font-weight:800;white-space:nowrap}
+.line .cost{font-size:12.5px;color:var(--muted);min-width:82px;text-align:left;white-space:nowrap}
+.sum{display:grid;gap:4px;margin-top:2px}
+.sum .line .amt{font-weight:700}
+.sum .big{font-size:17px}
+
+/* order + recipe rows in dialogs */
+.orow{border:1px solid var(--line);border-radius:12px;padding:8px;margin-bottom:8px;background:var(--surface-2)}
+.orow-line{display:grid;grid-template-columns:1fr 92px 1.3fr 36px;gap:6px;margin-top:6px;align-items:center}
+.rline{display:grid;grid-template-columns:1fr 1.3fr 36px;gap:6px;margin-top:6px;align-items:center}
+@media(max-width:480px){.orow-line{grid-template-columns:1fr 88px 1fr 34px}}
+.rowtot{font-size:12.5px;color:var(--muted);margin-top:4px}
+.x{border:0;background:none;color:var(--muted);font-size:22px;cursor:pointer;min-height:40px}
+.x:hover{color:var(--danger)}
+.hist{font-size:13px;color:var(--muted);margin-top:14px}
+.hist div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--line-strong);padding:2px 0}
+.dsum{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:10px;font-size:13.5px}
+
+/* dialog (bottom sheet on phones) */
+dialog{border:0;border-radius:20px;padding:0;width:calc(100% - 24px);max-width:600px;background:var(--surface);color:var(--ink);
+  box-shadow:0 24px 70px rgba(0,0,0,.4)}
+dialog::backdrop{background:rgba(12,22,25,.58)}
+dialog[open]{animation:sheet .2s ease-out}
+@keyframes sheet{from{transform:translateY(22px);opacity:0}to{transform:none;opacity:1}}
+.dlg-body{padding:20px 20px 22px;max-height:88vh;overflow:auto}
+.dlg-body h3{font-size:19px;font-weight:800;margin-bottom:2px}
+.dlg-body h4{font-size:14.5px;margin:18px 0 6px}
+@media(max-width:600px){
+  dialog{margin:auto 0 0;width:100%;max-width:100%;border-radius:22px 22px 0 0}
+  .dlg-body{padding-top:14px;max-height:90vh}
+  .dlg-body::before{content:"";display:block;width:42px;height:4px;border-radius:2px;background:var(--line-strong);margin:0 auto 14px}
+}
+@media(prefers-reduced-motion:reduce){dialog[open]{animation:none}}
+
+/* about */
+.hero{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:22px 20px;margin-bottom:14px;box-shadow:var(--shadow);
+  display:flex;gap:16px;align-items:center;flex-wrap:wrap;border-top:5px solid var(--brand)}
+.hero .logo{width:76px;height:76px}
+.hero h2{font-size:24px;font-weight:800}
+.hero .sl{color:var(--muted);margin-top:2px}
+.lr{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.lr:last-child{border-bottom:0}
+.lr .k{color:var(--muted);flex:none}
+.lr .v{font-weight:500;text-align:left;overflow-wrap:anywhere;min-width:0}
+a.lr .v{color:var(--brand-strong)}
+.aboutp{white-space:pre-line;margin:0}
+.logo-edit{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+
+/* auth / setup */
+.auth h1{font-size:26px;font-weight:800;margin:14px 0 4px}
+.auth .lead{color:var(--muted);margin:0 0 18px}
+.auth ol{padding-inline-start:20px;margin:8px 0}
+.auth li{margin-bottom:4px}
+.auth .logo{width:64px;height:64px}
+pre{direction:ltr;text-align:left;background:#0f1a1d;color:#d8ece6;border-radius:12px;padding:12px;font-size:12px;overflow:auto;max-height:280px;line-height:1.5}
+code{direction:ltr;unicode-bidi:embed;background:var(--surface-2);padding:0 5px;border-radius:4px}
+
+#toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,20px);background:var(--ink);color:var(--surface);
+  padding:10px 20px;border-radius:99px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:100;max-width:90%;
+  box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){#toast{transition:none}}
+.spin{text-align:center;color:var(--muted);padding:60px 0}
+.rs-row{cursor:default}
+.mrow{padding:2px 0 6px;border-bottom:1px dotted var(--line-strong)}
+.mrow:last-of-type{border-bottom:0}
+.pline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
+.pline input{width:150px;min-height:38px;padding:3px 10px;font-size:14px}
+.hg{font-size:13px;color:var(--muted);font-weight:700;margin:16px 0 4px}
+.hrow{display:grid;grid-template-columns:24px 1fr;gap:10px;padding:7px 0;border-bottom:1px dotted var(--line-strong);align-items:start}
+.hi{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff;margin-top:2px}
+.hi.ok{background:var(--ok)} .hi.warn{background:var(--warn)} .hi.fail{background:var(--danger)} .hi.info{background:var(--info)}
+.hfix{font-size:13px;color:var(--brand-strong);margin-top:2px}
+.okbox{background:var(--ok-soft);color:var(--ok);border-radius:12px;padding:10px 14px;margin:12px 0;font-weight:700}
+.pline input.chg{border-color:var(--warn);background:var(--warn-soft)}
+.pline input[aria-invalid=true]{border-color:var(--danger)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<dialog id="dlg"></dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript>برای استفاده از برنامه باید جاوااسکریپت مرورگر فعال باشد.</noscript>
+
+<script>
+/* ============================================================
+   تنظیمات اتصال به Supabase
+   اگر می‌خواهی روی همه‌ی دستگاه‌ها بدون وارد کردن دوباره‌ی آدرس و کلید کار کند،
+   این دو مقدار را یک بار اینجا بنویس. (کلید anon / publishable عمومی است و مشکلی ندارد.)
+   ============================================================ */
+const CONFIG = { SUPABASE_URL: 'https://izinthbufposlsuzkafm.supabase.co', SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Iml6aW50aGJ1ZnBvc2xzdXprYWZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk4NzIzNzgsImV4cCI6MjEwNTQ0ODM3OH0.RXR8dvrF33L2Yt_z7z1wP_9DTefKkIHPxGBExLWjG50' };
+
+/* ---------- helpers ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10));
+
+function parseNum(v) {
+  if (v == null) return NaN;
+  let s = String(v).trim();
+  if (!s) return NaN;
+  s = s.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+       .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d))
+       .replace(/[٬,،\s]/g, '').replace(/[٫\/]/g, '.');
+  return Number(s);
+}
+const fmt = (n, d = 2) => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: d }).format(n);
+const money = n => fmt(Math.round(n), 0) + ' تومان';
+function fmtWeight(g) {
+  if (!isFinite(g)) return '—';
+  if (g >= 1000) return fmt(g / 1000, 3) + ' کیلوگرم';
+  return fmt(g, g < 10 ? 2 : 1) + ' گرم';
+}
+const fmtDate = d => new Date(d).toLocaleDateString('fa-IR');
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function errMsg(e) {
+  const m = (e && (e.message || e.error_description)) || String(e);
+  if (/Invalid login credentials/i.test(m)) return 'ایمیل یا رمز عبور اشتباه است.';
+  if (/Could not find the .* column|column .* does not exist/i.test(m)) return 'ساختار دیتابیس قدیمی است. کد SQL جدید را در Supabase اجرا کن (تنظیمات ← راه‌اندازی دیتابیس).';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'اتصال به اینترنت یا Supabase برقرار نشد.';
+  return m;
+}
+async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); }
+  catch (_) {
+    const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove();
+  }
+  toast('کپی شد');
+}
+function download(name, text, type) {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+/* ---------- SQL schema (run once in Supabase SQL Editor) ---------- */
+const SQL_SCHEMA = `-- مدیریت کارگاه: مواد اولیه (با واحد)، محصولات، مشتریان، سفارش‌ها، واریزی‌ها و درباره ما
+-- همه‌ی جدول‌ها پیشوند kb_ دارند تا با جدول‌های دیگر پروژه‌ی Supabase (اگر داری) قاطی نشوند.
+-- این کد را می‌شود چند بار اجرا کرد؛ چیزی خراب نمی‌شود.
+
+-- اگر اشتباهی در دیتابیس دیگری (مثلاً Neon) اجرا کنی، همین‌جا با پیام روشن متوقف می‌شود
+do $$
+begin
+  if to_regnamespace('auth') is null or not exists (select 1 from pg_roles where rolname = 'authenticated') then
+    raise exception 'این دیتابیس Supabase نیست (schema auth یا نقش authenticated پیدا نشد). مطمئن شو در SQL Editor پروژه‌ی Supabase اجرا می‌کنی، نه در Neon یا دیتابیس دیگری.';
+  end if;
+end $$;
+
+create table if not exists public.kb_materials (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  unit text not null default 'kg',
+  price numeric,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_material_prices (
+  id uuid primary key default gen_random_uuid(),
+  material_id uuid not null references public.kb_materials(id) on delete cascade,
+  price numeric not null,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_products (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  base_weight_g numeric not null default 1000,
+  sale_price_per_kg numeric,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_recipe_items (
+  id uuid primary key default gen_random_uuid(),
+  product_id uuid not null references public.kb_products(id) on delete cascade,
+  material_id uuid not null references public.kb_materials(id) on delete restrict,
+  amount numeric not null,
+  unit text not null default 'g',
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_customers (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  phone text,
+  address text,
+  messenger_id text,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_orders (
+  id uuid primary key default gen_random_uuid(),
+  order_no integer,
+  customer_id uuid not null references public.kb_customers(id) on delete restrict,
+  order_date date not null default current_date,
+  planned_date date,
+  status text not null default 'new',
+  delivery_method text,
+  delivery_fee numeric not null default 0,
+  discount numeric not null default 0,
+  ship_address text,
+  tracking_code text,
+  shipped_at date,
+  delivered_at date,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_order_items (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid not null references public.kb_orders(id) on delete cascade,
+  product_id uuid not null references public.kb_products(id) on delete restrict,
+  weight_g numeric not null,
+  price_per_kg numeric not null default 0,
+  cost_per_kg numeric not null default 0,
+  position integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
+create table if not exists public.kb_payments (
+  id uuid primary key default gen_random_uuid(),
+  customer_id uuid not null references public.kb_customers(id) on delete cascade,
+  order_id uuid references public.kb_orders(id) on delete set null,
+  amount numeric not null,
+  paid_at date not null default current_date,
+  method text,
+  reference text,
+  note text,
+  created_at timestamptz not null default now()
+);
+
+-- اطلاعات «درباره ما»
+create table if not exists public.kb_business_profile (
+  id uuid primary key default gen_random_uuid(),
+  data jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- فقط کاربر واردشده به این جدول‌ها دسترسی دارد
+grant usage on schema public to authenticated;
+
+do $$
+declare t text;
+begin
+  foreach t in array array['kb_materials','kb_material_prices','kb_products','kb_recipe_items','kb_customers','kb_orders','kb_order_items','kb_payments','kb_business_profile'] loop
+    execute format('alter table public.%I enable row level security', t);
+    execute format('grant select, insert, update, delete on public.%I to authenticated', t);
+    execute format('drop policy if exists "auth_all" on public.%I', t);
+    execute format('create policy "auth_all" on public.%I for all to authenticated using (true) with check (true)', t);
+  end loop;
+end $$;
+
+-- انتقال خودکار داده‌های نسخه‌های قبلی برنامه: فقط اگر در همین پروژه جدول‌های قدیمی (بدون kb_) با ساختار همین برنامه باشند.
+-- جدول‌های قدیمی دست نمی‌خورند و فقط کپی می‌شوند؛ اجرای دوباره هم چیزی را تکراری نمی‌کند.
+do $$
+begin
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'materials' and column_name in ('price_per_kg')) = 1 then
+    begin
+      insert into public.kb_materials (id, name, unit, price, note, created_at)
+      select (x->>'id')::uuid, x->>'name', coalesce(x->>'unit', 'kg'), coalesce(x->>'price', x->>'price_per_kg')::numeric, x->>'note', (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.materials t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'material_prices' and column_name in ('material_id','price')) = 2 then
+    begin
+      insert into public.kb_material_prices (id, material_id, price, created_at)
+      select (x->>'id')::uuid, (x->>'material_id')::uuid, (x->>'price')::numeric, (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.material_prices t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'products' and column_name in ('base_weight_g')) = 1 then
+    begin
+      insert into public.kb_products (id, name, base_weight_g, sale_price_per_kg, note, created_at)
+      select (x->>'id')::uuid, x->>'name', (x->>'base_weight_g')::numeric, (x->>'sale_price_per_kg')::numeric, x->>'note', (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.products t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'recipe_items' and column_name in ('product_id','material_id','amount_g')) = 3 then
+    begin
+      insert into public.kb_recipe_items (id, product_id, material_id, amount, unit, position, created_at)
+      select (x->>'id')::uuid, (x->>'product_id')::uuid, (x->>'material_id')::uuid, coalesce(x->>'amount', x->>'amount_g')::numeric, coalesce(x->>'unit', 'g'), coalesce((x->>'position')::integer, 0), (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.recipe_items t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'customers' and column_name in ('messenger_id')) = 1 then
+    begin
+      insert into public.kb_customers (id, name, phone, address, messenger_id, note, created_at)
+      select (x->>'id')::uuid, x->>'name', x->>'phone', x->>'address', x->>'messenger_id', x->>'note', (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.customers t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'orders' and column_name in ('order_no')) = 1 then
+    begin
+      insert into public.kb_orders (id, order_no, customer_id, order_date, planned_date, status, delivery_method, delivery_fee, discount, ship_address, tracking_code, shipped_at, delivered_at, note, created_at)
+      select (x->>'id')::uuid, (x->>'order_no')::integer, (x->>'customer_id')::uuid, (x->>'order_date')::date, (x->>'planned_date')::date, coalesce(x->>'status', 'new'), x->>'delivery_method',
+             coalesce((x->>'delivery_fee')::numeric, 0), coalesce((x->>'discount')::numeric, 0), x->>'ship_address', x->>'tracking_code', (x->>'shipped_at')::date, (x->>'delivered_at')::date, x->>'note', (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.orders t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'order_items' and column_name in ('cost_per_kg')) = 1 then
+    begin
+      insert into public.kb_order_items (id, order_id, product_id, weight_g, price_per_kg, cost_per_kg, position, created_at)
+      select (x->>'id')::uuid, (x->>'order_id')::uuid, (x->>'product_id')::uuid, (x->>'weight_g')::numeric, coalesce((x->>'price_per_kg')::numeric, 0), coalesce((x->>'cost_per_kg')::numeric, 0), coalesce((x->>'position')::integer, 0), (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.order_items t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'payments' and column_name in ('paid_at')) = 1 then
+    begin
+      insert into public.kb_payments (id, customer_id, order_id, amount, paid_at, method, reference, note, created_at)
+      select (x->>'id')::uuid, (x->>'customer_id')::uuid, (x->>'order_id')::uuid, (x->>'amount')::numeric, (x->>'paid_at')::date, x->>'method', x->>'reference', x->>'note', (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.payments t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+  if (select count(*) from information_schema.columns where table_schema = 'public' and table_name = 'business_profile' and column_name in ('data')) = 1 then
+    begin
+      insert into public.kb_business_profile (id, data, created_at)
+      select (x->>'id')::uuid, coalesce(x->'data', '{}'::jsonb), (x->>'created_at')::timestamptz
+      from (select to_jsonb(t) as x from public.business_profile t) s
+      on conflict (id) do nothing;
+    exception when others then raise notice 'رد شد: %', sqlerrm;
+    end;
+  end if;
+end $$;
+
+notify pgrst, 'reload schema';
+
+-- نتیجه: اگر همه چیز درست اجرا شده باشد، پایین صفحه فهرست ۹ جدول kb_ را می‌بینی
+select table_name as جدول_ساخته_شده
+from information_schema.tables
+where table_schema = 'public' and starts_with(table_name, 'kb_')
+order by table_name;
+`;
+
+/* ---------- storage layer (Supabase or local browser) ---------- */
+const APP_BUILD = 'kb-tables-v7-health';   // اگر این عبارت را در برنامه می‌بینی، نسخه‌ی جدید (جدول‌های kb_) است
+const TBL = t => 'kb_' + t;   // نام جدول‌ها در Supabase پیشوند kb_ دارند
+const TABLES = ['materials', 'material_prices', 'products', 'recipe_items', 'customers', 'orders', 'order_items', 'payments', 'business_profile'];
+const Local = {
+  key: 'kb_local_v1',
+  load() { try { return JSON.parse(localStorage.getItem(this.key)) || {}; } catch (_) { return {}; } },
+  save(d) { localStorage.setItem(this.key, JSON.stringify(d)); }
+};
+const Store = {
+  mode: 'supabase', sb: null,
+  useSupabase(url, key) { this.mode = 'supabase'; this.sb = window.supabase.createClient(url, key); },
+  useLocal() { this.mode = 'local'; this.sb = null; },
+  async list(t) {
+    if (this.mode === 'local') return (Local.load()[t] || []).slice();
+    const { data, error } = await this.sb.from(TBL(t)).select('*').order('created_at', { ascending: true });
+    if (error) throw error; return data;
+  },
+  async insert(t, rows) {
+    if (this.mode === 'local') {
+      const d = Local.load(); d[t] = d[t] || [];
+      const out = rows.map(r => ({ id: uid(), created_at: new Date().toISOString(), ...r }));
+      d[t].push(...out); Local.save(d); return out;
+    }
+    const { data, error } = await this.sb.from(TBL(t)).insert(rows).select();
+    if (error) throw error; return data;
+  },
+  async update(t, id, patch) {
+    if (this.mode === 'local') {
+      const d = Local.load(); const r = (d[t] || []).find(x => x.id === id);
+      if (r) Object.assign(r, patch); Local.save(d); return;
+    }
+    const { error } = await this.sb.from(TBL(t)).update(patch).eq('id', id);
+    if (error) throw error;
+  },
+  async remove(t, ids) {
+    if (this.mode === 'local') {
+      const d = Local.load(); d[t] = (d[t] || []).filter(r => !ids.includes(r.id));
+      if (t === 'products') d.recipe_items = (d.recipe_items || []).filter(r => !ids.includes(r.product_id));
+      if (t === 'materials') d.material_prices = (d.material_prices || []).filter(r => !ids.includes(r.material_id));
+      if (t === 'orders') {
+        d.order_items = (d.order_items || []).filter(r => !ids.includes(r.order_id));
+        (d.payments || []).forEach(r => { if (ids.includes(r.order_id)) r.order_id = null; });
+      }
+      if (t === 'customers') d.payments = (d.payments || []).filter(r => !ids.includes(r.customer_id));
+      Local.save(d); return;
+    }
+    const { error } = await this.sb.from(TBL(t)).delete().in('id', ids);
+    if (error) throw error;
+  },
+  async clear(t) {
+    if (this.mode === 'local') { const d = Local.load(); d[t] = []; Local.save(d); return; }
+    const { error } = await this.sb.from(TBL(t)).delete().not('id', 'is', null);
+    if (error) throw error;
+  },
+  async upsert(t, rows) {
+    if (this.mode === 'local') {
+      const d = Local.load(); d[t] = d[t] || [];
+      rows.forEach(r => { const i = d[t].findIndex(x => x.id === r.id); if (i >= 0) d[t][i] = r; else d[t].push(r); });
+      Local.save(d); return;
+    }
+    const { error } = await this.sb.from(TBL(t)).upsert(rows);
+    if (error) throw error;
+  }
+};
+
+/* ---------- state ---------- */
+const S = {
+  screen: 'loading', tab: 'orders', user: null, loadError: null, loading: false, q: '',
+  materials: [], prices: [], products: [], items: [], customers: [], orders: [], orderItems: [], payments: [],
+  profile: {}, profRow: null, oView: null, cView: null, ordMode: 'list', ordFilter: 'open', oq: '', cq: '', planSt: ['new', 'producing'],
+  calc: { pid: '', mode: 'product', weight: '1000', unit: 'g', mid: '', mamount: '', munit: 'g' }
+};
+let D = null;          // product dialog draft
+let lastCalc = null;   // for copy
+
+const matById = id => S.materials.find(m => m.id === id);
+const itemsOf = pid => S.items.filter(i => i.product_id === pid).sort((a, b) => (a.position || 0) - (b.position || 0));
+
+function productCost(p) {
+  let cost = 0, missing = false, total = 0;
+  for (const it of itemsOf(p.id)) {
+    const m = matById(it.material_id), ok = rowCompat(m, it), canon = rowCanon(it);
+    if (!(Number(m?.price) > 0) || !ok) missing = true; else cost += costOfCanon(m, canon);
+    if (uFam(it.unit) === 'w') total += canon;
+  }
+  const base = Number(p.base_weight_g) || 1000;
+  return { batchCost: cost, costPerKg: cost / (base / 1000), missing, total };
+}
+
+async function loadAll() {
+  const [materials, prices, products, items, customers, orders, orderItems, payments, profRows] = await Promise.all(TABLES.map(t => Store.list(t)));
+  const profRow = profRows[0] || null;
+  Object.assign(S, {
+    materials: materials.map(m => ({ ...m, unit: m.unit || 'kg', price: m.price ?? m.price_per_kg ?? null })), prices, products,
+    items: items.map(i => ({ ...i, amount: i.amount ?? i.amount_g, unit: i.unit || 'g' })),
+    customers, orders, orderItems, payments, profRow, profile: (profRow && profRow.data) || {}, loadError: null
+  });
+  ensureCalcDefaults();
+}
+function ensureCalcDefaults() {
+  const c = S.calc;
+  if (!S.products.some(p => p.id === c.pid)) c.pid = S.products[0]?.id || '';
+  const its = c.pid ? itemsOf(c.pid) : [];
+  if (c.mode === 'ingredient' && !its.some(i => i.material_id === c.mid)) c.mid = its[0]?.material_id || '';
+  const cur = its.find(i => i.material_id === c.mid);
+  if (c.mode === 'ingredient' && cur && uFam(c.munit) !== uFam(cur.unit)) c.munit = cur.unit;
+}
+async function guard(fn) { try { await fn(); } catch (e) { console.error(e); toast(errMsg(e)); } }
+
+/* ---------- boot ---------- */
+// فقط آدرس اصلی پروژه لازم است (مثلاً https://xxxx.supabase.co)؛ هر چیزی بعد از آن، مثل /rest/v1، حذف می‌شود
+function normUrl(u) {
+  u = String(u || '').trim();
+  if (!u) return '';
+  if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
+  try { return new URL(u).origin; } catch (_) { return u.replace(/\/+$/, ''); }
+}
+function getCfg() {
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem('kb_cfg')) || {}; } catch (_) {}
+  return { url: normUrl(CONFIG.SUPABASE_URL || saved.url || ''), key: (CONFIG.SUPABASE_KEY || saved.key || '').trim() };
+}
+async function boot() {
+  S.screen = 'loading'; render();
+  if (localStorage.getItem('kb_mode') === 'local') { Store.useLocal(); return enter(); }
+  const cfg = getCfg();
+  if (!cfg.url || !cfg.key) { S.screen = 'setup'; return render(); }
+  if (!window.supabase) { S.screen = 'setup'; render(); return toast('کتابخانه‌ی اتصال بارگذاری نشد. اینترنت را بررسی کن.'); }
+  try {
+    Store.useSupabase(cfg.url, cfg.key);
+    Store.sb.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT') { S.screen = 'login'; render(); } });
+    const { data } = await Store.sb.auth.getSession();
+    if (!data.session) { S.screen = 'login'; return render(); }
+    S.user = data.session.user;
+    return enter();
+  } catch (e) { S.screen = 'setup'; render(); toast(errMsg(e)); }
+}
+async function retryLoad() {
+  toast('در حال بررسی اتصال…');
+  await enter();
+  if (S.loadError) { await new Promise(r => setTimeout(r, 2500)); await enter(); }   // بعد از ساخت جدول‌ها، Supabase چند ثانیه طول می‌کشد تا آن‌ها را بشناسد
+  toast(S.loadError ? 'هنوز خطا دارد؛ جزئیات فنی را پایین صفحه ببین.' : 'متصل شد ✓');
+}
+async function enter() {
+  S.screen = 'app'; S.loading = true; render();
+  try { await loadAll(); } catch (e) {
+    console.error(e); S.loadError = errMsg(e);
+    S.loadErrorRaw = [e && e.code, e && e.message, e && e.details, e && e.hint].filter(Boolean).join(' | ') || String(e);
+  }
+  S.loading = false; render();
+}
+
+/* ---------- icons ---------- */
+const ICON = {
+  calc: '<svg class="i" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h2M14 12h2M8 16h2M14 16h2"/></svg>',
+  orders: '<svg class="i" viewBox="0 0 24 24"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>',
+  customers: '<svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 010 5.6M18 14.5c1.8.8 3 2.6 3 5"/></svg>',
+  products: '<svg class="i" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  materials: '<svg class="i" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7M12 11v10"/></svg>',
+  about: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
+  settings: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>'
+};
+const TABS = [['orders', 'سفارش‌ها'], ['customers', 'مشتریان'], ['calc', 'ماشین‌حساب'], ['products', 'محصولات'], ['materials', 'مواد اولیه'], ['settings', 'تنظیمات'], ['about', 'درباره ما', 'wide']];
+
+/* ---------- render ---------- */
+function render() {
+  const app = $('#app');
+  document.title = (bizName() ? bizName() + ' — ' : '') + 'مدیریت کارگاه';
+  if (S.screen === 'loading') { app.innerHTML = '<div class="awning"></div><div class="spin">در حال بارگذاری…</div>'; return; }
+  if (S.screen === 'setup') { app.innerHTML = '<div class="awning"></div>' + viewSetup(); return; }
+  if (S.screen === 'login') { app.innerHTML = '<div class="awning"></div>' + viewLogin(); return; }
+  const views = { orders: viewOrders, customers: viewCustomers, calc: viewCalc, products: viewProducts, materials: viewMaterials, settings: viewSettings, about: viewAbout };
+  let body;
+  if (S.loading) body = '<div class="spin">در حال دریافت اطلاعات…</div>';
+  else if (S.loadError && S.tab !== 'settings') body = viewLoadError();
+  else body = views[S.tab]();
+  app.innerHTML = `<div class="awning"></div><div class="shell">
+    <header class="brand"><button class="brandbtn" data-act="tab" data-t="about" aria-label="درباره ما">${logoHtml()}<span><span class="bname">${esc(bizName() || 'مدیریت کارگاه')}</span><span class="bslogan">${esc(S.profile.slogan || 'سفارش‌ها، مواد اولیه و حساب مشتریان')}</span></span></button>${Store.mode === 'local' ? '<span class="mode">حالت آزمایشی</span>' : ''}</header>
+    <nav class="tabs" aria-label="بخش‌ها">${TABS.map(([k, t, cls]) => `<button data-act="tab" data-t="${k}" class="${S.tab === k ? 'on' : ''} ${cls || ''}"><span class="ic">${ICON[k]}</span><span>${t}</span></button>`).join('')}</nav>
+    <main class="wrap">${body}</main></div>`;
+  if (S.tab === 'calc' && !S.loading && !S.loadError) renderCalcResult();
+}
+
+function emptyBox(title, text, btns, icon) {
+  return `<div class="empty"><div class="art">${ICON[icon || 'products']}</div><h3>${title}</h3><p>${text}</p><div class="actions" style="justify-content:center;margin-top:0">${btns}</div></div>`;
+}
+
+function viewLoadError() {
+  const missing = /does not exist|schema cache|relation|42P01|PGRST205/i.test(S.loadError);
+  return `<div class="err"><b>${missing ? 'بعضی جدول‌های دیتابیس پیدا نشد.' : 'دریافت اطلاعات انجام نشد.'}</b><br>
+    ${missing ? 'اگر کد SQL را همین الان اجرا کرده‌ای، چند ثانیه صبر کن و «تلاش دوباره» را بزن. اگر نه، کد SQL را (دکمه‌ی «کپی کد SQL») در SQL Editor پروژه‌ی Supabase اجرا کن. دقت کن همان پروژه‌ای باشد که آدرسش را در برنامه وارد کرده‌ای.' : esc(S.loadError)}</div>
+    <div class="actions"><button class="btn primary" data-act="retry">تلاش دوباره</button>
+    <button class="btn" data-act="copy-sql">کپی کد SQL</button>
+    <button class="btn" data-act="health">بررسی کامل</button>
+    <button class="btn ghost" data-act="tab" data-t="settings">تنظیمات</button></div>
+    ${/Perhaps you meant/i.test(S.loadErrorRaw || '') ? `<div class="notice"><b>دیتابیس جدول‌های قدیمی (بدون kb_) دارد، ولی جدول‌های kb_ هنوز ساخته نشده یا شناخته نشده‌اند.</b><ol style="margin:6px 0 0;padding-inline-start:20px"><li>«کپی کد SQL» همین صفحه را بزن (نه کدی که قبلاً جایی ذخیره کرده‌ای).</li><li>در SQL Editor همان پروژه Run کن. پایین نتیجه باید فهرست ۹ جدول با نام kb_ بیاید.</li><li>یک دقیقه صبر کن و «تلاش دوباره» را بزن.</li></ol></div>` : ''}
+    <details open><summary>جزئیات فنی</summary><pre>${esc(S.loadErrorRaw || S.loadError)}\n\nنسخه‌ی برنامه: ${APP_BUILD}\nپروژه: ${esc(getCfg().url || '—')}</pre></details>
+    <p class="help">در نسخه‌ی درست، نام جدول‌ها در این جزئیات با <code>kb_</code> شروع می‌شود (مثلاً kb_materials). اگر نه، فایل قدیمی هنوز باز است؛ فایل جدید را جایگزین کن (اگر روی هاست گذاشته‌ای دوباره آپلودش کن) و صفحه را با Ctrl+F5 یا بستن و باز کردن دوباره‌ی تب تازه کن.</p>`;
+}
+
+/* ----- setup / login ----- */
+function sqlSteps() {
+  return `<ol>
+    <li>در <code>supabase.com</code> وارد شو و یک پروژه بساز (یا پروژه‌ی خودت را باز کن).</li>
+    <li>از منوی <code>SQL Editor</code> کد پایین را اجرا کن (Run).</li>
+    <li>در <code>Authentication ← Users</code> با «Add user» یک کاربر با ایمیل و رمز خودت بساز و گزینه‌ی Auto Confirm را بزن.
+        بعد در تنظیمات Authentication گزینه‌ی <code>Allow new users to sign up</code> را خاموش کن تا کس دیگری ثبت‌نام نکند.</li>
+    <li>در <code>Project Settings ← API</code> مقدار Project URL و کلید anon یا publishable را کپی کن و پایین وارد کن.</li>
+  </ol>
+  <details><summary>نمایش کد SQL</summary><pre>${esc(SQL_SCHEMA)}</pre>
+  <button class="btn sm" data-act="copy-sql">کپی کد SQL</button></details>`;
+}
+function viewSetup() {
+  const cfg = getCfg();
+  return `<div class="auth wrap"><h1>مدیریت کارگاه</h1>
+  <p class="lead">مواد اولیه، دستور تهیه، سفارش‌ها و سود کارگاه را یک‌جا مدیریت کن.</p>
+  <section class="panel"><h2 style="font-size:16px">اتصال به دیتابیس رایگان (Supabase)</h2>
+    ${sqlSteps()}
+    <label for="cfg-url">Project URL (فقط آدرس اصلی، بدون /rest/v1)</label><input id="cfg-url" class="num" placeholder="https://xxxx.supabase.co" value="${esc(cfg.url)}">
+    <label for="cfg-key">کلید anon / publishable (نه service_role یا secret)</label><input id="cfg-key" class="num" value="${esc(cfg.key)}">
+    <div class="actions"><button class="btn primary" data-act="cfg-save">ذخیره و ادامه</button></div>
+  </section>
+  <section class="panel"><h2 style="font-size:16px">فقط می‌خواهم امتحان کنم</h2>
+    <p class="muted" style="margin:4px 0 10px">داده‌ها فقط در همین مرورگر ذخیره می‌شوند و روی دستگاه‌های دیگر دیده نمی‌شوند. بعداً می‌توانی با پشتیبان‌گیری آن‌ها را منتقل کنی.</p>
+    <button class="btn" data-act="use-local">شروع آزمایشی</button></section></div>`;
+}
+function viewLogin() {
+  return `<div class="auth wrap"><h1>ورود</h1><p class="lead">با ایمیل و رمزی که در Supabase ساخته‌ای وارد شو.</p>
+  <form class="panel" id="login-form" autocomplete="on">
+    <label for="lg-email">ایمیل</label><input id="lg-email" class="num" type="email" autocomplete="username" required>
+    <label for="lg-pass">رمز عبور</label><input id="lg-pass" class="num" type="password" autocomplete="current-password" required>
+    <div class="actions"><button class="btn primary" type="submit">ورود</button>
+    <button class="btn ghost" type="button" data-act="goto-setup">تغییر اتصال</button>
+    <button class="btn ghost" type="button" data-act="health">بررسی اتصال</button></div></form></div>`;
+}
+
+/* ----- units ----- */
+const UNITS = {
+  g: { label: 'گرم', fam: 'w', f: 1 }, kg: { label: 'کیلوگرم', fam: 'w', f: 1000 },
+  ml: { label: 'میلی‌لیتر', fam: 'v', f: 1 }, l: { label: 'لیتر', fam: 'v', f: 1000 },
+  tsp: { label: 'قاشق چای‌خوری', fam: 'v', f: 5 }, tbsp: { label: 'قاشق غذاخوری', fam: 'v', f: 15 }, cup: { label: 'پیمانه', fam: 'v', f: 250 },
+  pc: { label: 'عدد', fam: 'pc', f: 1 }, pack: { label: 'بسته', fam: 'pack', f: 1 }, can: { label: 'قوطی', fam: 'can', f: 1 },
+  bag: { label: 'کیسه', fam: 'bag', f: 1 }, bottle: { label: 'بطری', fam: 'bottle', f: 1 }
+};
+const UNIT_GROUPS = [['وزن', ['g', 'kg']], ['حجم', ['ml', 'l', 'tsp', 'tbsp', 'cup']], ['تعداد', ['pc', 'pack', 'can', 'bag', 'bottle']]];
+const uOf = u => UNITS[u] || UNITS.g;
+const uLabel = u => uOf(u).label;
+const uFam = u => uOf(u).fam;
+const toCanon = (a, u) => a * uOf(u).f;       // weight -> grams, volume -> ml, others unchanged
+const fromCanon = (a, u) => a / uOf(u).f;
+const compatUnits = u => Object.keys(UNITS).filter(k => UNITS[k].fam === uFam(u));
+const defaultRowUnit = m => (!m ? 'g' : uFam(m.unit) === 'w' ? 'g' : m.unit);
+const unitOptions = sel => UNIT_GROUPS.map(([g, us]) => `<optgroup label="${g}">${us.map(u => `<option value="${u}" ${u === sel ? 'selected' : ''}>${UNITS[u].label}</option>`).join('')}</optgroup>`).join('');
+function fmtAmt(a, unit) {
+  const U = uOf(unit);
+  if (U.fam === 'w') return fmtWeight(a * U.f);
+  if (unit === 'l' && a < 1) return fmt(a * 1000, 1) + ' میلی‌لیتر';
+  if (unit === 'ml' && a >= 1000) return fmt(a / 1000, 3) + ' لیتر';
+  return fmt(a, a < 10 ? 2 : 1) + ' ' + U.label;
+}
+const rowCanon = it => toCanon(Number(it.amount) || 0, it.unit);
+const rowCompat = (m, it) => !!m && uFam(m.unit) === uFam(it.unit);
+const costOfCanon = (m, canon) => (m ? fromCanon(canon, m.unit) * (Number(m.price) || 0) : 0);
+
+/* ----- calculator ----- */
+function viewCalc() {
+  if (!S.products.length) {
+    return `<div class="page-head"><h2>ماشین‌حساب مواد</h2></div>` + emptyBox('هنوز محصولی نداری',
+      'اول مواد اولیه را با قیمتشان ثبت کن، بعد برای هر محصول دستور تهیه‌ی پایه را بنویس. ماشین‌حساب بعد از آن کار می‌کند.',
+      '<button class="btn primary" data-act="tab" data-t="materials">ثبت مواد اولیه</button><button class="btn" data-act="tab" data-t="products">ثبت محصول</button>', 'calc');
+  }
+  const c = S.calc, its = itemsOf(c.pid), cur = its.find(i => i.material_id === c.mid);
+  const chips = [250, 500, 1000, 2000, 5000].map(g => `<button class="chip" data-act="chip" data-g="${g}">${fmtWeight(g)}</button>`).join('');
+  const unitSel = (bind, val) => `<select data-bind="calc.${bind}" aria-label="واحد"><option value="g" ${val === 'g' ? 'selected' : ''}>گرم</option><option value="kg" ${val === 'kg' ? 'selected' : ''}>کیلوگرم</option></select>`;
+  const mUnits = cur ? compatUnits(cur.unit) : ['g'];
+  const mUnitSel = `<select data-bind="calc.munit" aria-label="واحد">${mUnits.map(u => `<option value="${u}" ${u === c.munit ? 'selected' : ''}>${uLabel(u)}</option>`).join('')}</select>`;
+  return `<div class="page-head"><h2>ماشین‌حساب مواد</h2></div><section class="panel">
+    <label for="c-pid" style="margin-top:0">محصول</label>
+    <select id="c-pid" data-bind="calc.pid">${S.products.map(p => `<option value="${p.id}" ${p.id === c.pid ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+    <div class="seg" role="group" aria-label="روش محاسبه">
+      <button data-act="calc-mode" data-v="product" class="${c.mode === 'product' ? 'on' : ''}">وزن محصول</button>
+      <button data-act="calc-mode" data-v="ingredient" class="${c.mode === 'ingredient' ? 'on' : ''}">مقدار یک ماده</button>
+    </div>
+    ${c.mode === 'product' ? `
+      <label for="c-w">چقدر محصول می‌خواهی درست کنی؟</label>
+      <div class="row2"><input id="c-w" class="num" inputmode="decimal" data-bind="calc.weight" value="${esc(c.weight)}" placeholder="مثلاً 300">${unitSel('unit', c.unit)}</div>
+      <div class="chips">${chips}</div>` : `
+      <label for="c-m">کدام ماده را داری؟</label>
+      <select id="c-m" data-bind="calc.mid">${its.map(i => `<option value="${i.material_id}" ${i.material_id === c.mid ? 'selected' : ''}>${esc(matById(i.material_id)?.name || '؟')}</option>`).join('')}</select>
+      <label for="c-ma">چقدر از آن داری؟</label>
+      <div class="row2"><input id="c-ma" class="num" inputmode="decimal" data-bind="calc.mamount" value="${esc(c.mamount)}" placeholder="مثلاً 2">${mUnitSel}</div>`}
+  </section><div id="calc-result"></div>`;
+}
+function calcResult() {
+  const c = S.calc, p = S.products.find(x => x.id === c.pid);
+  if (!p) return null;
+  const its = itemsOf(p.id);
+  if (!its.length) return { p, empty: true };
+  const base = Number(p.base_weight_g) || 1000;
+  let weight;
+  if (c.mode === 'product') weight = parseNum(c.weight) * (c.unit === 'kg' ? 1000 : 1);
+  else {
+    const it = its.find(i => i.material_id === c.mid);
+    weight = it && rowCanon(it) > 0 ? (toCanon(parseNum(c.mamount), c.munit) / rowCanon(it)) * base : NaN;
+  }
+  if (!(weight > 0)) return { p, invalid: true };
+  const f = weight / base;
+  const rows = its.map(it => {
+    const m = matById(it.material_id), a = Number(it.amount) * f, canon = toCanon(a, it.unit), ok = rowCompat(m, it), price = Number(m?.price) || 0;
+    return { name: m?.name || '؟', text: fmtAmt(a, it.unit), w: uFam(it.unit) === 'w' ? canon : 0, cost: ok ? costOfCanon(m, canon) : 0, noPrice: !price || !ok };
+  });
+  const cost = sumBy(rows, r => r.cost), priceKg = Number(p.sale_price_per_kg) || 0, sale = priceKg ? (weight / 1000) * priceKg : null;
+  return { p, weight, rows, cost, sale, profit: sale == null ? null : sale - cost, missing: rows.some(r => r.noPrice), total: sumBy(rows, r => r.w) };
+}
+function renderCalcResult() {
+  const el = $('#calc-result'); if (!el) return;
+  const r = calcResult(); lastCalc = r;
+  if (!r) { el.innerHTML = ''; return; }
+  if (r.empty) { el.innerHTML = `<div class="notice">برای «${esc(r.p.name)}» هنوز ماده‌ای ثبت نشده. از تب محصولات، دستور تهیه را کامل کن.</div>`; return; }
+  if (r.invalid) { el.innerHTML = '<div class="notice">مقدار را وارد کن تا مواد لازم نمایش داده شود.</div>'; return; }
+  const pct = r.sale ? Math.round((r.profit / r.sale) * 100) : null;
+  el.innerHTML = `<section class="ticket" aria-live="polite"><span class="stamp">برگه تولید</span>
+    <div class="kicker">برای تهیه‌ی</div>
+    <div class="weight">${fmtWeight(r.weight)}</div>
+    <div class="pname">${esc(r.p.name)}</div>
+    <div class="tear"></div>
+    ${r.rows.map(x => `<div class="line"><span>${esc(x.name)}</span><span class="fill"></span><span class="amt">${x.text}</span><span class="cost">${x.noPrice ? '<span class="badge">بدون قیمت</span>' : money(x.cost)}</span></div>`).join('')}
+    <div class="tear"></div>
+    <div class="sum">
+      ${r.total > 0 ? `<div class="line"><span>جمع مواد وزنی</span><span class="fill"></span><span class="amt">${fmtWeight(r.total)}</span></div>` : ''}
+      <div class="line"><span>هزینه‌ی مواد</span><span class="fill"></span><span class="amt">${money(r.cost)}</span></div>
+      ${r.sale != null ? `<div class="line"><span>قیمت فروش</span><span class="fill"></span><span class="tag">${money(r.sale)}</span></div>
+      <div class="line big"><span>سود</span><span class="fill"></span><span class="amt big ${r.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(r.profit)}${pct != null ? ' (' + fmt(pct, 0) + '٪)' : ''}</span></div>` : ''}
+    </div>
+    ${r.missing ? '<div class="notice" style="margin-bottom:0">بعضی مواد قیمت ندارند؛ هزینه و سود دقیق نیست.</div>' : ''}
+    <div class="actions"><button class="btn sm" data-act="copy-calc">کپی لیست مواد</button></div>
+  </section>`;
+}
+function calcText() {
+  const r = lastCalc; if (!r || !r.rows) return '';
+  return `${r.p.name} — ${fmtWeight(r.weight)}\n` + r.rows.map(x => `${x.name}: ${x.text}`).join('\n');
+}
+
+/* ----- materials ----- */
+function viewMaterials() {
+  return `<div class="page-head"><h2>مواد اولیه</h2><button class="btn primary" data-act="mat-new">+ ماده‌ی جدید</button></div>
+  ${S.materials.length > 6 ? '<input type="search" placeholder="جستجو در مواد…" data-bind="q" value="' + esc(S.q) + '" aria-label="جستجو">' : ''}
+  <div id="mat-list" style="margin-top:10px">${matListHtml()}</div>
+  <p class="help">برای هر ماده واحدی را انتخاب کن که با آن می‌خری (کیلو، لیتر، عدد، بسته…) و قیمت هر واحد را به تومان بنویس. هر بار قیمتی را عوض کنی، تاریخچه‌اش ذخیره می‌شود.</p>`;
+}
+function matListHtml() {
+  if (!S.materials.length) return emptyBox('هنوز ماده‌ای ثبت نشده', 'گوشت، مرغ، ادویه، نان، روغن، تخم‌مرغ و هر چیزی که در تولید مصرف می‌کنی را با واحد و قیمتش اضافه کن.', '<button class="btn primary" data-act="mat-new">+ افزودن اولین ماده</button>', 'materials');
+  const q = S.q.trim();
+  let list = [...S.materials].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  if (q) list = list.filter(m => m.name.includes(q));
+  if (!list.length) return '<div class="empty"><p style="margin:0">موردی پیدا نشد.</p></div>';
+  return '<div class="list">' + list.map(m => {
+    const used = S.items.filter(i => i.material_id === m.id).length, price = Number(m.price) || 0;
+    return `<button class="item" data-act="mat-edit" data-id="${m.id}"><span class="grow"><span class="name">${esc(m.name)}</span><br><span class="sub">${used ? 'در ' + fmt(used, 0) + ' محصول' : 'هنوز در دستور تهیه‌ای نیست'}</span></span>
+      ${price ? `<span class="side"><span class="tag">${money(price)}</span><span class="sub">هر ${uLabel(m.unit)}</span></span>` : '<span class="badge">بدون قیمت</span>'}</button>`;
+  }).join('') + '</div>';
+}
+function openMaterial(id) {
+  const m = id ? matById(id) : null, unit = m?.unit || 'kg';
+  const hist = m ? S.prices.filter(p => p.material_id === id).sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 6) : [];
+  openDlg(`<div class="dlg-body"><h3>${m ? 'ویرایش ماده' : 'ماده‌ی اولیه‌ی جدید'}</h3>
+    <label for="m-name">نام ماده</label><input id="m-name" value="${esc(m?.name)}" placeholder="مثلاً: گوشت گوساله">
+    <div class="grid2"><div><label for="m-unit">واحد خرید</label><select id="m-unit">${unitOptions(unit)}</select></div>
+    <div><label for="m-price" id="m-price-lbl">قیمت هر ${uLabel(unit)} (تومان)</label><input id="m-price" class="num" inputmode="decimal" value="${esc(m?.price ?? '')}" placeholder="مثلاً 650000"></div></div>
+    <div class="help">در دستور تهیه می‌توانی مقدار را با هر واحد هم‌خانواده بنویسی؛ مثلاً قیمت گوشت را هر کیلو بنویس و مقدارش را در دستور به گرم. پیمانه ۲۵۰ میلی‌لیتر، قاشق غذاخوری ۱۵ و قاشق چای‌خوری ۵ میلی‌لیتر حساب می‌شود.</div>
+    <label for="m-note">یادداشت (اختیاری)</label><input id="m-note" value="${esc(m?.note)}">
+    ${hist.length ? `<div class="hist"><b>تاریخچه‌ی قیمت</b>${hist.map(h => `<div><span>${fmtDate(h.created_at)}</span><span>${money(h.price)}</span></div>`).join('')}</div>` : ''}
+    <div class="actions"><button class="btn primary" data-act="mat-save" data-id="${id || ''}">ذخیره</button>
+    <button class="btn ghost" data-act="dlg-close">انصراف</button>
+    ${m ? `<button class="btn danger" data-act="mat-del" data-id="${id}">حذف ماده</button>` : ''}</div></div>`);
+  setTimeout(() => $('#m-name')?.focus(), 60);
+}
+async function matSave(id) {
+  const name = $('#m-name').value.trim(), note = $('#m-note').value.trim() || null, raw = $('#m-price').value.trim(), unit = $('#m-unit').value;
+  if (!name) return toast('نام ماده را وارد کن');
+  if (S.materials.some(x => x.id !== id && x.name.trim().toLowerCase() === name.toLowerCase())) return toast('ماده‌ای با این نام قبلاً ثبت شده');
+  const price = raw === '' ? null : parseNum(raw);
+  if (raw !== '' && !(price >= 0)) return toast('قیمت معتبر نیست');
+  if (id) {
+    const bad = S.items.filter(i => i.material_id === id && uFam(i.unit) !== uFam(unit));
+    if (bad.length) return toast(`این ماده در دستور تهیه‌ی ${fmt(new Set(bad.map(i => i.product_id)).size, 0)} محصول با واحد دیگری استفاده شده. واحد را از همان خانواده انتخاب کن یا اول ماده را از آن دستورها حذف کن.`);
+  }
+  await guard(async () => {
+    if (id) {
+      const old = matById(id);
+      await Store.update('materials', id, { name, unit, price, note });
+      if (price !== null && (price !== Number(old.price) || unit !== old.unit)) await Store.insert('material_prices', [{ material_id: id, price }]);
+    } else {
+      const [r] = await Store.insert('materials', [{ name, unit, price, note }]);
+      if (price !== null) await Store.insert('material_prices', [{ material_id: r.id, price }]);
+    }
+    await loadAll(); closeDlg(); render(); toast('ذخیره شد');
+  });
+}
+async function matDel(id) {
+  const used = S.items.filter(i => i.material_id === id).length;
+  if (used) return toast('این ماده در دستور تهیه‌ی محصولی استفاده شده. اول از آن دستور حذفش کن.');
+  if (!confirm('این ماده حذف شود؟')) return;
+  await guard(async () => { await Store.remove('materials', [id]); await loadAll(); closeDlg(); render(); toast('حذف شد'); });
+}
+
+/* ----- products ----- */
+function viewProducts() {
+  const head = `<div class="page-head"><h2>محصولات</h2><button class="btn primary" data-act="prod-new">+ محصول جدید</button></div>`;
+  if (!S.products.length) {
+    return head + emptyBox('هنوز محصولی تعریف نکرده‌ای', S.materials.length
+      ? 'برای هر محصول، مواد لازم برای یک وزن مشخص را بنویس (مثلاً برای ۱ کیلو کالباس).'
+      : 'اول از تب «مواد اولیه» مواد را اضافه کن تا بتوانی در دستور تهیه انتخابشان کنی.',
+      S.materials.length ? '<button class="btn primary" data-act="prod-new">+ افزودن محصول</button>' : '<button class="btn primary" data-act="tab" data-t="materials">رفتن به مواد اولیه</button>', 'products');
+  }
+  return head + '<div class="list">' + S.products.map(p => {
+    const c = productCost(p), price = Number(p.sale_price_per_kg) || 0, profit = price - c.costPerKg, n = itemsOf(p.id).length;
+    return `<div class="item" style="cursor:default;flex-wrap:wrap">
+      <button class="item" style="border:0;padding:0;width:auto;flex:1;min-width:200px" data-act="prod-edit" data-id="${p.id}">
+        <span class="grow"><span class="name">${esc(p.name)}</span><br>
+        <span class="pl"><span>${n ? fmt(n, 0) + ' ماده برای ' + fmtWeight(Number(p.base_weight_g)) : 'دستور تهیه خالی است'}</span>
+        ${n ? `<span>هزینه‌ی هر کیلو: ${money(c.costPerKg)}${c.missing ? ' <span class="badge">قیمت ناقص</span>' : ''}</span>` : ''}
+        ${n && price ? `<span class="${profit >= 0 ? 'profit-pos' : 'profit-neg'}">سود هر کیلو: ${money(profit)} (${fmt(Math.round(profit / price * 100), 0)}٪)</span>` : ''}</span></span>
+        ${price ? `<span class="tag">${money(price)}</span>` : '<span class="badge">بدون قیمت فروش</span>'}
+      </button>
+      <span class="prod-actions"><button class="btn ghost sm" data-act="prod-dup" data-id="${p.id}">کپی</button><button class="btn danger sm" data-act="prod-del" data-id="${p.id}">حذف</button></span></div>`;
+  }).join('') + '</div><p class="help">روی هر محصول بزن تا دستور تهیه و قیمتش را ویرایش کنی. قیمت فروش هر کیلو را بنویس تا سود هر کیلو معلوم شود.</p>';
+}
+function openProduct(id) {
+  if (!S.materials.length) return toast('اول چند ماده‌ی اولیه ثبت کن');
+  const p = id ? S.products.find(x => x.id === id) : null;
+  D = { id: p?.id || null, name: p?.name || '', base: String(p?.base_weight_g ?? 1000), price: p?.sale_price_per_kg == null ? '' : String(p.sale_price_per_kg), note: p?.note || '',
+        rows: p ? itemsOf(p.id).map(i => ({ mid: i.material_id, amount: String(i.amount), unit: i.unit })) : [{ mid: '', amount: '', unit: 'g' }] };
+  if (!D.rows.length) D.rows.push({ mid: '', amount: '', unit: 'g' });
+  openDlg(`<div class="dlg-body"><h3>${D.id ? 'ویرایش محصول' : 'محصول جدید'}</h3>
+    <label for="d-name">نام محصول</label><input id="d-name" data-d="name" value="${esc(D.name)}" placeholder="مثلاً: کالباس ۹۰٪ گوشت">
+    <div class="grid2">
+      <div><label for="d-base">دستور برای چند گرم محصول؟</label><input id="d-base" class="num" inputmode="decimal" data-d="base" value="${esc(D.base)}"><div class="help">برای ۱ کیلو بنویس 1000</div></div>
+      <div><label for="d-price">قیمت فروش هر کیلو (تومان)</label><input id="d-price" class="num" inputmode="decimal" data-d="price" value="${esc(D.price)}"></div>
+    </div>
+    <h4>مواد لازم برای همین مقدار</h4>
+    <div id="d-rows">${rowsHtml()}</div>
+    <button class="btn ghost sm" data-act="d-addrow">+ افزودن ماده</button>
+    <div id="d-sum"></div>
+    <label for="d-note">یادداشت (اختیاری)</label><input id="d-note" data-d="note" value="${esc(D.note)}">
+    <div class="actions"><button class="btn primary" data-act="prod-save">ذخیره</button><button class="btn ghost" data-act="dlg-close">انصراف</button></div></div>`);
+  updateSum();
+  const isEdit = !!D.id;
+  setTimeout(() => (isEdit ? $('#d-price') : $('#d-name'))?.focus(), 60);
+}
+function rowsHtml() {
+  const mats = [...S.materials].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  return D.rows.map((r, i) => {
+    const m = matById(r.mid), units = m ? compatUnits(m.unit) : [r.unit || 'g'];
+    return `<div class="orow"><select data-row="${i}" data-f="mid" aria-label="ماده"><option value="">انتخاب ماده…</option>${mats.map(x => `<option value="${x.id}" ${x.id === r.mid ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</select>
+    <div class="rline"><input class="num" inputmode="decimal" data-row="${i}" data-f="amount" value="${esc(r.amount)}" placeholder="مقدار" aria-label="مقدار">
+    <select data-row="${i}" data-f="unit" aria-label="واحد" ${m ? '' : 'disabled'}>${units.map(u => `<option value="${u}" ${u === r.unit ? 'selected' : ''}>${uLabel(u)}</option>`).join('')}</select>
+    <button class="x" data-act="d-delrow" data-i="${i}" aria-label="حذف ردیف">×</button></div></div>`;
+  }).join('');
+}
+function updateSum() {
+  const el = $('#d-sum'); if (!el || !D) return;
+  let wtotal = 0, cost = 0, missing = false, n = 0;
+  D.rows.forEach(r => {
+    const a = parseNum(r.amount), m = matById(r.mid);
+    if (!m || !(a > 0)) return;
+    n++; const canon = toCanon(a, r.unit);
+    if (uFam(r.unit) === 'w') wtotal += canon;
+    if (!(Number(m.price) > 0) || !rowCompat(m, r)) missing = true; else cost += costOfCanon(m, canon);
+  });
+  const base = parseNum(D.base);
+  if (!n) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div class="dsum">${wtotal > 0 ? `جمع مواد وزنی: <b>${fmtWeight(wtotal)}</b> — ` : ''}هزینه‌ی این دستور: <b>${money(cost)}</b>${base > 0 ? ` — هزینه‌ی هر کیلو محصول: <b>${money(cost / (base / 1000))}</b>` : ''}${missing ? '<br><span class="badge">بعضی مواد قیمت ندارند</span>' : ''}</div>`;
+}
+async function prodSave() {
+  const name = D.name.trim(), base = parseNum(D.base), rawP = String(D.price).trim(), price = rawP === '' ? null : parseNum(rawP);
+  if (!name) return toast('نام محصول را وارد کن');
+  if (S.products.some(x => x.id !== D.id && x.name.trim().toLowerCase() === name.toLowerCase())) return toast('محصولی با این نام قبلاً ثبت شده');
+  if (!(base > 0)) return toast('وزن مبنای دستور تهیه را وارد کن');
+  if (rawP !== '' && !(price >= 0)) return toast('قیمت فروش معتبر نیست');
+  const rows = [], seen = new Set();
+  for (const r of D.rows) {
+    const empty = !r.mid && String(r.amount).trim() === '';
+    if (empty) continue;
+    const a = parseNum(r.amount);
+    if (!r.mid) return toast('برای هر ردیف یک ماده انتخاب کن');
+    if (!(a > 0)) return toast('مقدار هر ماده را وارد کن');
+    if (seen.has(r.mid)) return toast('یک ماده دو بار در دستور آمده: ' + (matById(r.mid)?.name || ''));
+    seen.add(r.mid); rows.push({ mid: r.mid, a, unit: r.unit });
+  }
+  if (!rows.length) return toast('حداقل یک ماده به دستور تهیه اضافه کن');
+  await guard(async () => {
+    const payload = { name, base_weight_g: base, sale_price_per_kg: price, note: D.note.trim() || null };
+    let pid = D.id;
+    if (pid) await Store.update('products', pid, payload);
+    else { const [r] = await Store.insert('products', [payload]); pid = r.id; }
+    const oldIds = S.items.filter(i => i.product_id === pid).map(i => i.id);
+    await Store.insert('recipe_items', rows.map((r, i) => ({ product_id: pid, material_id: r.mid, amount: r.a, unit: r.unit, position: i })));
+    if (oldIds.length) await Store.remove('recipe_items', oldIds);
+    S.calc.pid = pid;
+    await loadAll(); closeDlg(); render(); toast('ذخیره شد');
+  });
+}
+async function prodDup(id) {
+  const p = S.products.find(x => x.id === id); if (!p) return;
+  await guard(async () => {
+    const [r] = await Store.insert('products', [{ name: p.name + ' (کپی)', base_weight_g: p.base_weight_g, sale_price_per_kg: p.sale_price_per_kg, note: p.note }]);
+    const its = itemsOf(id);
+    if (its.length) await Store.insert('recipe_items', its.map((i, k) => ({ product_id: r.id, material_id: i.material_id, amount: i.amount, unit: i.unit, position: k })));
+    await loadAll(); render(); toast('کپی ساخته شد؛ نامش را ویرایش کن');
+  });
+}
+async function prodDel(id) {
+  const p = S.products.find(x => x.id === id); if (!p) return;
+  if (S.orderItems.some(i => i.product_id === id)) return toast('این محصول در سفارش‌ها استفاده شده و قابل حذف نیست. اول آن سفارش‌ها را حذف کن.');
+  if (!confirm(`محصول «${p.name}» و دستور تهیه‌اش حذف شود؟`)) return;
+  await guard(async () => { await Store.remove('products', [id]); await loadAll(); render(); toast('حذف شد'); });
+}
+
+/* ----- settings ----- */
+function viewSettings() {
+  const local = Store.mode === 'local';
+  return `<div class="page-head"><h2>تنظیمات</h2></div>
+  <section class="panel"><div class="page-head" style="margin:0 0 4px"><h3 style="font-size:15px">درباره ما</h3><button class="btn sm" data-act="tab" data-t="about">مشاهده و ویرایش</button></div>
+    <p class="muted" style="margin:0">نام تولیدی، لوگو، آدرس و شبکه‌های اجتماعی${bizName() ? ' — ' + esc(bizName()) : ''}</p></section>
+  <section class="panel"><h3 style="font-size:15px">اتصال</h3>
+    ${local
+      ? `<p class="muted">حالت آزمایشی: اطلاعات فقط در همین مرورگر ذخیره می‌شود.</p>
+         <button class="btn" data-act="goto-cloud">اتصال به دیتابیس Supabase</button>`
+      : `<p class="muted">متصل به Supabase${S.user?.email ? ' با ' + '<span dir="ltr">' + esc(S.user.email) + '</span>' : ''}</p>
+         <button class="btn" data-act="logout">خروج از حساب</button>
+         <button class="btn ghost" data-act="goto-setup">تغییر آدرس دیتابیس</button>`}
+  </section>
+  <section class="panel"><h3 style="font-size:15px">پشتیبان‌گیری</h3>
+    <p class="muted" style="margin-top:2px">هر از گاهی یک نسخه‌ی پشتیبان بگیر و جایی امن نگه دار.</p>
+    <div class="actions" style="margin-top:8px">
+      <button class="btn" data-act="exp-json">دانلود پشتیبان کامل</button>
+      <button class="btn ghost" data-act="exp-mat">مواد اولیه (Excel)</button>
+      <button class="btn ghost" data-act="exp-rec">دستور تهیه‌ها (Excel)</button>
+      <button class="btn ghost" data-act="exp-ord">سفارش‌ها (Excel)</button>
+      <button class="btn ghost" data-act="exp-pay">واریزی‌ها (Excel)</button></div>
+    <label style="margin-top:16px">بازگردانی از فایل پشتیبان</label>
+    <input type="file" accept="application/json,.json" id="imp-file">
+  </section>
+  ${resetPanel()}
+  <section class="panel"><h3 style="font-size:15px">بررسی سلامت</h3>
+    <p class="muted" style="margin:2px 0 10px">اتصال، جدول‌ها، دسترسی‌ها، امنیت کلید و ثبت‌نام، و صحت اطلاعات را یک‌جا بررسی می‌کند و راه‌حل هر مشکل را می‌نویسد.</p>
+    <div class="actions" style="margin-top:0"><button class="btn primary" data-act="health">بررسی کامل</button><button class="btn" data-act="copy-sqlcheck">کپی SQL بررسی دیتابیس</button></div></section>
+  <section class="panel"><h3 style="font-size:15px">راه‌اندازی دیتابیس</h3>${sqlSteps()}</section>
+  <p class="help" style="text-align:center">نسخه‌ی برنامه: ${APP_BUILD}</p>`;
+}
+function exportJson() {
+  const payload = { app: 'kalbas-manager', version: 1, exported_at: new Date().toISOString(),
+    tables: { materials: S.materials, material_prices: S.prices, products: S.products, recipe_items: S.items, customers: S.customers, orders: S.orders, order_items: S.orderItems, payments: S.payments, business_profile: S.profRow ? [S.profRow] : [] } };
+  download('backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(payload, null, 2), 'application/json');
+}
+const toCsv = rows => '\ufeff' + rows.map(r => r.map(c => { c = String(c ?? ''); return /[",\n\r]/.test(c) ? '"' + c.replace(/"/g, '""') + '"' : c; }).join(',')).join('\r\n');
+function exportMaterials() {
+  download('materials.csv', toCsv([['ماده', 'واحد', 'قیمت هر واحد (تومان)', 'یادداشت'], ...S.materials.map(m => [m.name, uLabel(m.unit), m.price ?? '', m.note ?? ''])]), 'text/csv;charset=utf-8');
+}
+function exportRecipes() {
+  const rows = [['محصول', 'وزن مبنا (گرم)', 'قیمت فروش هر کیلو', 'ماده', 'مقدار', 'واحد', 'واحد خرید ماده', 'قیمت هر واحد ماده']];
+  S.products.forEach(p => itemsOf(p.id).forEach(i => { const m = matById(i.material_id); rows.push([p.name, p.base_weight_g, p.sale_price_per_kg ?? '', m?.name ?? '', i.amount, uLabel(i.unit), m ? uLabel(m.unit) : '', m?.price ?? '']); }));
+  download('recipes.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+// پشتیبان‌های نسخه‌های قدیمی نام ستون‌های قدیمی را دارند؛ قبل از بازگردانی به شکل جدید تبدیل می‌شوند
+function cleanRow(t, r) {
+  r = { ...r };
+  if (t === 'materials') { if (r.price == null && r.price_per_kg != null) r.price = r.price_per_kg; delete r.price_per_kg; r.unit = r.unit || 'kg'; }
+  if (t === 'recipe_items') { if (r.amount == null && r.amount_g != null) r.amount = r.amount_g; delete r.amount_g; r.unit = r.unit || 'g'; }
+  return r;
+}
+async function importJson(file) {
+  await guard(async () => {
+    const j = JSON.parse(await file.text());
+    if (j.app !== 'kalbas-manager' || !j.tables) throw new Error('این فایل، پشتیبان همین برنامه نیست.');
+    if (!confirm('اطلاعات فایل با اطلاعات فعلی ادغام می‌شود (موارد هم‌شناسه جایگزین می‌شوند). ادامه بدهم؟')) return;
+    for (const t of TABLES) { const rows = (j.tables[t] || []).map(r => cleanRow(t, r)); if (rows.length) await Store.upsert(t, rows); }
+    await loadAll(); render(); toast('بازگردانی شد');
+  });
+}
+
+/* ---------- brand, avatar, about (business profile) ---------- */
+const DEFAULT_LOGO = '<svg class="logo" viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="24" r="24" fill="var(--brand)"/><g transform="rotate(-35 24 24)"><rect x="7" y="16.5" width="34" height="15" rx="7.5" fill="#fff"/><path d="M15 16.5v15M33 16.5v15" stroke="var(--brand)" stroke-width="2"/><path d="M11 20.5c2-1 4-1 6 0" stroke="var(--brand)" stroke-width="1.2" fill="none" opacity=".5"/></g></svg>';
+const logoHtml = () => (S.profile.logo ? `<img class="logo" src="${esc(S.profile.logo)}" alt="">` : DEFAULT_LOGO);
+const bizName = () => String(S.profile.name || '').trim();
+const avClass = name => 'av' + ([...String(name || '?')].reduce((a, c) => a + c.charCodeAt(0), 0) % 6);
+const avatar = name => `<span class="avatar ${avClass(name)}" aria-hidden="true">${esc([...String(name || '؟').trim()][0] || '؟')}</span>`;
+
+const PROFILE_GROUPS = [
+  ['مشخصات', [['name', 'نام تولیدی', 'text'], ['slogan', 'شعار یا توضیح کوتاه', 'text'], ['owner', 'نام مسئول', 'text']]],
+  ['تماس', [['phone', 'تلفن', 'ltr'], ['phone2', 'تلفن دوم', 'ltr'], ['address', 'آدرس', 'area'], ['hours', 'ساعات سفارش‌گیری', 'text']]],
+  ['شبکه‌های اجتماعی و وب', [['channel', 'لینک کانال سفارش', 'ltr'], ['instagram', 'اینستاگرام', 'ltr'], ['telegram', 'تلگرام', 'ltr'], ['whatsapp', 'واتساپ', 'ltr'],
+    ['eitaa', 'ایتا', 'ltr'], ['bale', 'بله', 'ltr'], ['rubika', 'روبیکا', 'ltr'], ['website', 'وب‌سایت', 'ltr'], ['email', 'ایمیل', 'ltr']]],
+  ['معرفی', [['about', 'درباره‌ی ما', 'area']]]
+];
+const PROFILE_LABEL = Object.fromEntries(PROFILE_GROUPS.flatMap(g => g[1]).map(f => [f[0], f[1]]));
+const SOCIAL_KEYS = ['channel', 'instagram', 'telegram', 'whatsapp', 'eitaa', 'bale', 'rubika', 'website', 'email'];
+function socialLink(k, v) {
+  v = String(v || '').trim(); if (!v) return '';
+  if (k === 'phone' || k === 'phone2') return 'tel:' + latin(v).replace(/[^\d+]/g, '');
+  if (k === 'email') return 'mailto:' + v;
+  if (/^https?:\/\//i.test(v)) return v;
+  const id = v.replace(/^@/, '');
+  switch (k) {
+    case 'instagram': return 'https://instagram.com/' + id;
+    case 'telegram': return 'https://t.me/' + id;
+    case 'whatsapp': { const d = latin(v).replace(/\D/g, ''); return 'https://wa.me/' + (d.startsWith('0') ? '98' + d.slice(1) : d); }
+    case 'eitaa': return 'https://eitaa.com/' + id;
+    case 'bale': return 'https://ble.ir/' + id;
+    case 'rubika': return 'https://rubika.ir/' + id;
+    default: return 'https://' + v;
+  }
+}
+const shortUrl = v => String(v).replace(/^https?:\/\//i, '').replace(/\/$/, '');
+function aboutText() {
+  const P = S.profile, L = [];
+  if (P.name) L.push(P.name); if (P.slogan) L.push(P.slogan);
+  if (P.about) L.push('', P.about);
+  const add = k => { if (String(P[k] || '').trim()) L.push(`${PROFILE_LABEL[k]}: ${P[k]}`); };
+  L.push(''); ['phone', 'phone2', 'address', 'hours', ...SOCIAL_KEYS].forEach(add);
+  return L.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+function viewAbout() {
+  const P = S.profile;
+  const has = !!P.logo || Object.keys(P).some(k => k !== 'logo' && String(P[k] || '').trim());
+  const head = '<div class="page-head"><h2>درباره ما</h2></div>';
+  if (!has) return head + emptyBox('اطلاعات تولیدی را کامل کن', 'نام تولیدی، آدرس، شماره تماس و شبکه‌های اجتماعی را یک بار وارد کن. نام و لوگو در بالای برنامه و در متن فاکتور استفاده می‌شود.', '<button class="btn primary" data-act="about-edit">ثبت اطلاعات</button>', 'about');
+  const rows = (keys, social) => keys.filter(k => String(P[k] || '').trim()).map(k => {
+    const link = socialLink(k, P[k]);
+    const ext = social && !/^tel:|^mailto:/.test(link) ? ' target="_blank" rel="noopener"' : '';
+    const val = social || k === 'phone' || k === 'phone2' ? `<span class="v" dir="ltr">${esc(shortUrl(P[k]))}</span>` : `<span class="v">${esc(P[k])}</span>`;
+    return link && (social || k === 'phone' || k === 'phone2') ? `<a class="lr" href="${esc(link)}"${ext}><span class="k">${PROFILE_LABEL[k]}</span>${val}</a>` : `<div class="lr"><span class="k">${PROFILE_LABEL[k]}</span>${val}</div>`;
+  }).join('');
+  const contact = rows(['phone', 'phone2', 'address', 'hours'], false), social = rows(SOCIAL_KEYS, true);
+  return head + `<section class="hero">${logoHtml()}<div style="flex:1;min-width:180px"><h2>${esc(P.name || 'تولیدی من')}</h2>
+      ${P.slogan ? `<div class="sl">${esc(P.slogan)}</div>` : ''}${P.owner ? `<div class="sl">مسئول: ${esc(P.owner)}</div>` : ''}</div>
+      <div class="prod-actions"><button class="btn primary sm" data-act="about-edit">ویرایش اطلاعات</button><button class="btn sm" data-act="about-copy">کپی متن معرفی</button></div></section>
+    ${P.about ? `<section class="panel"><h3 style="font-size:15px;margin-bottom:6px">درباره‌ی ما</h3><p class="aboutp">${esc(P.about)}</p></section>` : ''}
+    ${contact ? `<section class="panel"><h3 style="font-size:15px">تماس</h3>${contact}</section>` : ''}
+    ${social ? `<section class="panel"><h3 style="font-size:15px">شبکه‌های اجتماعی و وب</h3>${social}</section>` : ''}`;
+}
+let PF = null;
+function openAbout() {
+  const P = S.profile; PF = { logo: P.logo || '' };
+  const field = ([k, label, kind]) => {
+    const v = esc(P[k] || '');
+    if (kind === 'area') return `<label for="pf-${k}">${label}</label><textarea id="pf-${k}" rows="${k === 'about' ? 4 : 2}">${v}</textarea>`;
+    return `<label for="pf-${k}">${label}</label><input id="pf-${k}" ${kind === 'ltr' ? 'class="num"' : ''} value="${v}"${SOCIAL_KEYS.includes(k) && k !== 'email' && k !== 'whatsapp' && k !== 'website' ? ' placeholder="@نام‌کاربری یا لینک کامل"' : ''}>`;
+  };
+  openDlg(`<div class="dlg-body"><h3>اطلاعات تولیدی</h3>
+    <label>لوگو (اختیاری)</label>
+    <div class="logo-edit"><span id="pf-logo-prev">${PF.logo ? `<img class="logo" src="${esc(PF.logo)}" alt="">` : DEFAULT_LOGO}</span>
+      <input type="file" id="pf-logo-file" accept="image/*" style="flex:1;min-width:180px"><button class="btn ghost sm" data-act="logo-clear">حذف لوگو</button></div>
+    ${PROFILE_GROUPS.map(([g, fs]) => `<h4>${g}</h4>${fs.map(field).join('')}`).join('')}
+    <div class="actions"><button class="btn primary" data-act="about-save">ذخیره</button><button class="btn ghost" data-act="dlg-close">انصراف</button></div></div>`);
+}
+async function pickLogo(file) {
+  if (!PF || !file) return;
+  try {
+    const url = URL.createObjectURL(file), img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+    const k = Math.min(1, 256 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+    cv.width = Math.max(1, Math.round(img.width * k)); cv.height = Math.max(1, Math.round(img.height * k));
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
+    let out = cv.toDataURL('image/webp', 0.85);
+    if (out.length > 350000) out = cv.toDataURL('image/jpeg', 0.8);
+    PF.logo = out; $('#pf-logo-prev').innerHTML = `<img class="logo" src="${esc(out)}" alt="">`;
+  } catch (e) { toast('این تصویر خوانده نشد؛ فایل دیگری امتحان کن.'); }
+}
+async function aboutSave() {
+  const data = {};
+  PROFILE_GROUPS.forEach(([, fs]) => fs.forEach(([k]) => { const v = ($('#pf-' + k)?.value || '').trim(); if (v) data[k] = v; }));
+  if (PF.logo) data.logo = PF.logo;
+  await guard(async () => {
+    if (S.profRow) await Store.update('business_profile', S.profRow.id, { data }); else await Store.insert('business_profile', [{ data }]);
+    await loadAll(); closeDlg(); render(); toast('اطلاعات ذخیره شد');
+  });
+}
+
+/* ---------- dates (Jalali input, ISO storage) ---------- */
+const latin = s => String(s ?? '').replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+const pad2 = n => String(n).padStart(2, '0');
+const P_FMT = new Intl.DateTimeFormat('en-US-u-ca-persian-nu-latn', { timeZone: 'UTC', year: 'numeric', month: 'numeric', day: 'numeric' });
+const DATE_FA = new Intl.DateTimeFormat('fa-IR', { timeZone: 'UTC', year: 'numeric', month: '2-digit', day: '2-digit' });
+function gToJ(dt) { const p = {}; P_FMT.formatToParts(dt).forEach(x => { p[x.type] = x.value; }); return [parseInt(p.year, 10), parseInt(p.month, 10), parseInt(p.day, 10)]; }
+function todayIso() { const n = new Date(); return n.getFullYear() + '-' + pad2(n.getMonth() + 1) + '-' + pad2(n.getDate()); }
+const isoToDate = iso => { const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number); return new Date(Date.UTC(y, m - 1, d)); };
+const dateToIso = dt => dt.getUTCFullYear() + '-' + pad2(dt.getUTCMonth() + 1) + '-' + pad2(dt.getUTCDate());
+function isoToJ(iso) { if (!iso) return ''; const [y, m, d] = gToJ(isoToDate(iso)); return y + '/' + pad2(m) + '/' + pad2(d); }
+const fmtIso = iso => (iso ? DATE_FA.format(isoToDate(iso)) : '—');
+function jToIso(str) {
+  const t = latin(str).trim().replace(/[-.\s]+/g, '/').split('/');
+  if (t.length !== 3) return null;
+  const [jy, jm, jd] = t.map(Number);
+  if (!(jy > 1200 && jy < 1700 && jm >= 1 && jm <= 12 && jd >= 1 && jd <= 31)) return null;
+  const off = jm <= 6 ? (jm - 1) * 31 : 186 + (jm - 7) * 30;
+  const base = Date.UTC(jy + 621, 2, 21);
+  for (let k = -4; k <= 4; k++) {
+    const c = new Date(base + (off + jd - 1 + k) * 86400000);
+    const [y, m, d] = gToJ(c);
+    if (y === jy && m === jm && d === jd) return dateToIso(c);
+  }
+  return null;
+}
+
+/* ---------- customers / orders / payments: model ---------- */
+const STATUS = [['new', 'ثبت‌شده'], ['producing', 'در حال تولید'], ['ready', 'آماده تحویل'], ['shipped', 'ارسال‌شده'], ['delivered', 'تحویل‌شده'], ['canceled', 'لغو‌شده']];
+const OPEN_STATUSES = ['new', 'producing', 'ready', 'shipped'];
+const PAY_METHODS = ['نقدی', 'کارت‌به‌کارت', 'کارت‌خوان', 'حواله / پایا', 'سایر'];
+const SHIP_METHODS = ['پیک', 'پست', 'تحویل حضوری', 'سایر'];
+const PAY_LABEL = { unpaid: 'پرداخت‌نشده', partial: 'بخشی پرداخت‌شده', paid: 'تسویه‌شده' };
+const stLabel = k => (STATUS.find(s => s[0] === k) || [0, k])[1];
+const customerById = id => S.customers.find(c => c.id === id);
+const orderById = id => S.orders.find(o => o.id === id);
+const productById = id => S.products.find(p => p.id === id);
+const itemsOfOrder = oid => S.orderItems.filter(i => i.order_id === oid).sort((a, b) => (a.position || 0) - (b.position || 0));
+const paymentsOfOrder = oid => S.payments.filter(p => p.order_id === oid);
+const sumBy = (arr, f) => arr.reduce((a, x) => a + (Number(f(x)) || 0), 0);
+
+function orderTotals(o) {
+  const its = itemsOfOrder(o.id);
+  const itemsTotal = sumBy(its, i => (Number(i.weight_g) / 1000) * Number(i.price_per_kg));
+  const fee = Number(o.delivery_fee) || 0, discount = Number(o.discount) || 0;
+  const total = itemsTotal + fee - discount, paid = sumBy(paymentsOfOrder(o.id), p => p.amount);
+  return { itemsTotal, fee, discount, total, paid, remaining: total - paid, weight: sumBy(its, i => i.weight_g) };
+}
+function payState(o) {
+  const t = orderTotals(o);
+  if (t.paid <= 0) return t.total > 0 ? 'unpaid' : 'paid';
+  return t.paid + 0.5 < t.total ? 'partial' : 'paid';
+}
+function customerStats(cid) {
+  const orders = S.orders.filter(o => o.customer_id === cid && o.status !== 'canceled');
+  const sales = sumBy(orders, o => orderTotals(o).total), paid = sumBy(S.payments.filter(p => p.customer_id === cid), p => p.amount);
+  return { count: orders.length, sales, paid, balance: sales - paid };
+}
+function itemsSummary(o) {
+  return itemsOfOrder(o.id).map(i => (productById(i.product_id)?.name || '؟') + ' ' + fmtWeight(Number(i.weight_g))).join('، ');
+}
+function nextOrderNo() { return Math.max(0, ...S.orders.map(o => Number(o.order_no) || 0)) + 1; }
+
+/* raw materials needed for a set of orders (uses the current recipes and material prices) */
+function materialRows(orderIds) {
+  const map = new Map(), noRecipe = [];
+  for (const oid of orderIds) {
+    for (const it of itemsOfOrder(oid)) {
+      const p = productById(it.product_id), rec = p ? itemsOf(p.id) : [];
+      if (!rec.length) { noRecipe.push(p?.name || '؟'); continue; }
+      const f = Number(it.weight_g) / (Number(p.base_weight_g) || 1000);
+      for (const r of rec) { if (!matById(r.material_id)) continue; map.set(r.material_id, (map.get(r.material_id) || 0) + rowCanon(r) * f); }
+    }
+  }
+  const rows = [...map].map(([mid, canon]) => {
+    const m = matById(mid), qty = fromCanon(canon, m.unit), price = Number(m.price) || 0;
+    return { mid, name: m.name, text: fmtAmt(qty, m.unit), qty, price, unit: m.unit, w: uFam(m.unit) === 'w' ? canon : 0, cost: qty * price, noPrice: !price };
+  }).sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  return { rows, noRecipe, total: sumBy(rows, r => r.w), cost: sumBy(rows, r => r.cost), missing: rows.some(r => r.noPrice) };
+}
+function matLines(res) {
+  if (!res.rows.length) return '<p class="muted" style="margin:4px 0">ماده‌ای محاسبه نشد. دستور تهیه‌ی محصولات این سفارش را کامل کن.</p>'
+    + (res.noRecipe.length ? `<div class="notice">دستور تهیه‌ی این محصولات خالی است: ${esc([...new Set(res.noRecipe)].join('، '))}</div>` : '');
+  return res.rows.map(x => `<div class="line"><span>${esc(x.name)}</span><span class="fill"></span><span class="amt">${x.text}</span><span class="cost">${x.noPrice ? '<span class="badge">بدون قیمت</span>' : money(x.cost)}</span></div>`).join('')
+    + `<div class="tear" style="margin:8px 0"></div><div class="line"><span>هزینه‌ی مواد</span><span class="fill"></span><span class="amt">${money(res.cost)}</span></div>`
+    + (res.total > 0 ? `<div class="line"><span>جمع مواد وزنی</span><span class="fill"></span><span class="amt">${fmtWeight(res.total)}</span></div>` : '')
+    + (res.missing ? '<div class="notice">بعضی مواد قیمت ندارند؛ هزینه دقیق نیست.</div>' : '')
+    + (res.noRecipe.length ? `<div class="notice">دستور تهیه‌ی این محصولات خالی است: ${esc([...new Set(res.noRecipe)].join('، '))}</div>` : '');
+}
+const matText = res => res.rows.map(x => `- ${x.name}: ${x.text}`).join('\n');
+
+/* ----- editable material prices inside the production list ----- */
+const lastPriceDate = mid => {
+  const h = S.prices.filter(p => p.material_id === mid).sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+  return h ? fmtDate(h.created_at) : '';
+};
+function productCostBlock(orderIds) {
+  const ps = [...new Set(orderIds.flatMap(oid => itemsOfOrder(oid).map(i => i.product_id)))].map(productById).filter(Boolean);
+  if (!ps.length) return '';
+  return '<h4 style="font-size:14px;margin:16px 0 4px">قیمت تمام‌شده‌ی محصولات (هر کیلو)</h4>' + ps.map(p => {
+    const c = productCost(p), sale = Number(p.sale_price_per_kg) || 0;
+    return `<div class="line"><span>${esc(p.name)}</span><span class="fill"></span><span class="amt">${c.costPerKg > 0 ? money(c.costPerKg) : '—'}</span><span class="cost">${sale ? 'فروش ' + money(sale) : ''}</span></div>`
+      + (c.missing ? '<div class="help" style="margin:0 0 4px">بعضی مواد این محصول قیمت ندارند.</div>' : '');
+  }).join('');
+}
+function matEditor(res, orderIds) {
+  if (!res.rows.length) return matLines(res);
+  const rows = res.rows.map(x => {
+    const last = lastPriceDate(x.mid), pv = x.price > 0 ? x.price : '';
+    return `<div class="mrow"><div class="line"><span>${esc(x.name)}</span><span class="fill"></span><span class="amt">${x.text}</span><span class="cost" data-mcost="${x.mid}">${x.noPrice ? '<span class="badge">بدون قیمت</span>' : money(x.cost)}</span></div>
+      <div class="pline"><span class="sub">قیمت هر ${uLabel(x.unit)}</span><input class="num" inputmode="decimal" data-mp="${x.mid}" data-q="${x.qty}" data-orig="${pv}" value="${pv}" placeholder="تومان" aria-label="قیمت هر ${uLabel(x.unit)} ${esc(x.name)}">${last ? `<span class="sub">آخرین تغییر: ${last}</span>` : ''}</div></div>`;
+  }).join('');
+  return `<div data-mpscope data-orders="${orderIds.join(',')}">${rows}
+    <div class="tear" style="margin:8px 0"></div>
+    <div class="line"><span>هزینه‌ی مواد</span><span class="fill"></span><span class="amt mp-total">${money(res.cost)}</span></div>
+    ${res.total > 0 ? `<div class="line"><span>جمع مواد وزنی</span><span class="fill"></span><span class="amt">${fmtWeight(res.total)}</span></div>` : ''}
+    ${res.noRecipe.length ? `<div class="notice">دستور تهیه‌ی این محصولات خالی است: ${esc([...new Set(res.noRecipe)].join('، '))}</div>` : ''}
+    <div class="actions" style="margin-top:12px"><button class="btn primary sm" data-act="mp-save" disabled>ذخیره‌ی قیمت‌ها</button></div>
+    <p class="help">آخرین قیمت هر ماده اینجاست. اگر قیمت خرید عوض شده، همین‌جا اصلاحش کن و ذخیره بزن؛ قیمت مواد و قیمت تمام‌شده‌ی همه‌ی محصولات به‌روز می‌شود و هزینه‌ی ثبت‌شده‌ی سفارش‌های در جریان این فهرست هم اصلاح می‌شود. سفارش‌های تحویل‌شده و لغوشده تغییر نمی‌کنند.</p>
+    ${productCostBlock(orderIds)}</div>`;
+}
+function mpLive(scope) {
+  let total = 0, changed = false, invalid = false;
+  scope.querySelectorAll('[data-mp]').forEach(inp => {
+    const raw = inp.value.trim(), price = raw === '' ? 0 : parseNum(raw), orig = inp.dataset.orig === '' ? null : Number(inp.dataset.orig);
+    const bad = raw !== '' && !(price >= 0), cost = bad ? 0 : Number(inp.dataset.q) * price;
+    total += cost;
+    const cell = scope.querySelector(`[data-mcost="${inp.dataset.mp}"]`);
+    if (cell) cell.innerHTML = price > 0 && !bad ? money(cost) : '<span class="badge">بدون قیمت</span>';
+    const diff = (raw === '' ? null : price) !== orig;
+    inp.classList.toggle('chg', diff && !bad); inp.setAttribute('aria-invalid', bad ? 'true' : 'false');
+    if (bad) invalid = true; else if (diff) changed = true;
+  });
+  const tot = scope.querySelector('.mp-total'); if (tot) tot.textContent = money(total);
+  const btn = scope.querySelector('[data-act=mp-save]'); if (btn) btn.disabled = !changed || invalid;
+}
+async function mpSave(btn) {
+  const scope = btn.closest('[data-mpscope]'); if (!scope) return;
+  const orderIds = (scope.dataset.orders || '').split(',').filter(Boolean), changes = [];
+  for (const inp of scope.querySelectorAll('[data-mp]')) {
+    const raw = inp.value.trim(), orig = inp.dataset.orig === '' ? null : Number(inp.dataset.orig), price = raw === '' ? null : parseNum(raw);
+    if (raw !== '' && !(price >= 0)) return toast('یکی از قیمت‌ها معتبر نیست');
+    if (price === null && orig !== null) return toast('قیمت را پاک نکن؛ اگر ماده رایگان است ۰ بنویس.');
+    if (price !== orig && price !== null) changes.push({ mid: inp.dataset.mp, price });
+  }
+  if (!changes.length) return toast('قیمتی تغییر نکرده');
+  btn.disabled = true;
+  await guard(async () => {
+    for (const c of changes) {
+      await Store.update('materials', c.mid, { price: c.price });
+      await Store.insert('material_prices', [{ material_id: c.mid, price: c.price }]);
+    }
+    await loadAll();
+    let n = 0;
+    for (const oid of orderIds) {
+      const o = orderById(oid); if (!o || !OPEN_STATUSES.includes(o.status)) continue;
+      for (const it of itemsOfOrder(oid)) {
+        const p = productById(it.product_id); if (!p) continue;
+        const cpk = productCost(p).costPerKg;
+        if (Math.abs(cpk - (Number(it.cost_per_kg) || 0)) > 0.5) { await Store.update('order_items', it.id, { cost_per_kg: cpk }); n++; }
+      }
+    }
+    await loadAll(); render();
+    toast(`قیمت ${fmt(changes.length, 0)} ماده ذخیره شد` + (n ? ` و هزینه‌ی ${fmt(n, 0)} قلم سفارش به‌روز شد` : ''));
+  });
+  btn.disabled = false;
+}
+
+function balanceBadge(b) {
+  if (Math.abs(b) < 1) return '<span class="st pay-paid">تسویه</span>';
+  return b > 0 ? `<span class="st pay-unpaid">بدهکار: ${money(b)}</span>` : `<span class="st st-shipped">بستانکار: ${money(-b)}</span>`;
+}
+function orderText(o) {
+  const c = customerById(o.customer_id), m = materialRows([o.id]);
+  return `سفارش ${fmt(o.order_no || 0, 0)} — ${c?.name || ''}\n` + itemsOfOrder(o.id).map(i => `${productById(i.product_id)?.name || '؟'}: ${fmtWeight(Number(i.weight_g))}`).join('\n') + '\n\nمواد لازم:\n' + matText(m);
+}
+function invoiceText(o) {
+  const c = customerById(o.customer_id), t = orderTotals(o), P = S.profile;
+  const lines = itemsOfOrder(o.id).map(i => `- ${productById(i.product_id)?.name || '؟'}: ${fmtWeight(Number(i.weight_g))} × ${money(Number(i.price_per_kg))} برای هر کیلو = ${money((Number(i.weight_g) / 1000) * Number(i.price_per_kg))}`);
+  const foot = [P.phone ? `تلفن: ${P.phone}` : null, P.channel ? `کانال: ${P.channel}` : null, P.instagram ? `اینستاگرام: ${P.instagram}` : null].filter(x => x !== null);
+  return [P.name ? `«${P.name}»` : null, `سفارش شماره ${fmt(o.order_no || 0, 0)}`, `مشتری: ${c?.name || ''}`, `تاریخ: ${fmtIso(o.order_date)}`, '', ...lines, '',
+    `جمع اقلام: ${money(t.itemsTotal)}`, t.fee ? `هزینه ارسال: ${money(t.fee)}` : null, t.discount ? `تخفیف: ${money(t.discount)}` : null,
+    `مبلغ نهایی: ${money(t.total)}`, t.paid ? `پرداخت‌شده: ${money(t.paid)}` : null, t.paid ? `مانده: ${money(Math.max(0, t.remaining))}` : null,
+    ...(foot.length ? ['', ...foot] : [])].filter(x => x !== null).join('\n');
+}
+
+/* ---------- orders: list ---------- */
+function orderRow(o) {
+  const c = customerById(o.customer_id), t = orderTotals(o), ps = payState(o);
+  return `<button class="item s-${o.status}" data-act="ord-open" data-id="${o.id}">${avatar(c?.name)}
+    <span class="grow"><span class="name">${esc(c?.name || '؟')}</span><span class="ono">سفارش ${fmt(o.order_no || 0, 0)}</span><br>
+    <span class="sub">${fmtIso(o.order_date)}</span><br><span class="sub">${esc(itemsSummary(o))}</span></span>
+    <span class="side"><span class="tag">${money(t.total)}</span><span class="badges"><span class="st st-${o.status}">${stLabel(o.status)}</span>${o.status !== 'canceled' ? `<span class="st pay-${ps}">${PAY_LABEL[ps]}</span>` : ''}</span></span></button>`;
+}
+function compactMoney(n) {
+  if (n >= 1e6) return fmt(n / 1e6, 1) + ' میلیون تومان';
+  if (n >= 1e3) return fmt(Math.round(n / 1e3), 0) + ' هزار تومان';
+  return money(n);
+}
+function kpiHtml() {
+  const live = S.orders.filter(o => o.status !== 'canceled');
+  const openN = S.orders.filter(o => OPEN_STATUSES.includes(o.status)).length, prodN = S.orders.filter(o => o.status === 'new' || o.status === 'producing').length;
+  const owed = sumBy(live, o => Math.max(0, orderTotals(o).remaining));
+  return `<div class="kpis"><div class="kpi"><b>${fmt(openN, 0)}</b><span>سفارش در جریان</span></div><div class="kpi"><b>${fmt(prodN, 0)}</b><span>منتظر تولید</span></div><div class="kpi"><b>${compactMoney(owed)}</b><span>مانده‌ی طلب از سفارش‌ها</span></div></div>`;
+}
+function viewOrders() {
+  if (S.oView) return viewOrderDetail();
+  const head = `<div class="page-head"><h2>سفارش‌ها</h2><button class="btn primary" data-act="ord-new">+ سفارش جدید</button></div>
+    ${S.orders.length ? kpiHtml() : ''}
+    <div class="seg" role="group" aria-label="نمایش" style="margin-top:12px"><button data-act="ord-mode" data-v="list" class="${S.ordMode === 'list' ? 'on' : ''}">فهرست سفارش‌ها</button>
+    <button data-act="ord-mode" data-v="plan" class="${S.ordMode === 'plan' ? 'on' : ''}">مواد لازم</button></div>`;
+  if (S.ordMode === 'plan') return head + viewPlan();
+  const F = [['open', 'در جریان'], ['delivered', 'تحویل‌شده'], ['canceled', 'لغو‌شده'], ['all', 'همه']];
+  return head + `<div class="chips">${F.map(([k, t]) => `<button class="chip ${S.ordFilter === k ? 'on' : ''}" data-act="ord-filter" data-v="${k}">${t}</button>`).join('')}</div>
+    ${S.orders.length > 5 ? `<input type="search" data-bind="oq" placeholder="جستجوی نام مشتری یا شماره سفارش…" value="${esc(S.oq)}" aria-label="جستجو" style="margin-top:10px">` : ''}
+    <div id="ord-list" style="margin-top:10px">${ordListHtml()}</div>`;
+}
+function ordListHtml() {
+  if (!S.orders.length) return emptyBox('هنوز سفارشی ثبت نشده', 'وقتی مشتری در پیام‌رسان سفارش داد، اینجا ثبتش کن. مواد لازم و مبلغ خودکار حساب می‌شود.',
+    '<button class="btn primary" data-act="ord-new">+ ثبت اولین سفارش</button>', 'orders');
+  const q = latin(S.oq).trim();
+  let list = S.orders.filter(o => S.ordFilter === 'all' ? true : S.ordFilter === 'open' ? OPEN_STATUSES.includes(o.status) : o.status === S.ordFilter);
+  if (q) list = list.filter(o => (customerById(o.customer_id)?.name || '').includes(q) || String(o.order_no) === q);
+  list.sort((a, b) => (Number(b.order_no) || 0) - (Number(a.order_no) || 0));
+  if (!list.length) return '<div class="empty"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>';
+  return '<div class="list">' + list.map(orderRow).join('') + '</div>';
+}
+
+/* ---------- orders: materials plan ---------- */
+function viewPlan() {
+  const set = S.planSt;
+  const chips = STATUS.filter(s => s[0] !== 'canceled').map(([k, t]) => `<button class="chip ${set.includes(k) ? 'on' : ''}" data-act="plan-toggle" data-v="${k}">${t}</button>`).join('');
+  const orders = S.orders.filter(o => set.includes(o.status)).sort((a, b) => (Number(a.order_no) || 0) - (Number(b.order_no) || 0));
+  let body;
+  if (!orders.length) body = '<div class="empty" style="margin-top:12px"><p style="margin:0">سفارشی با این وضعیت‌ها نیست. وضعیت‌های بالا را عوض کن.</p></div>';
+  else {
+    const grand = materialRows(orders.map(o => o.id));
+    const byCus = new Map(); orders.forEach(o => { if (!byCus.has(o.customer_id)) byCus.set(o.customer_id, []); byCus.get(o.customer_id).push(o); });
+    body = `<section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 6px"><h3 style="font-size:16px">جمع کل مواد لازم (${fmt(orders.length, 0)} سفارش)</h3>
+      <button class="btn sm" data-act="copy-plan">کپی لیست</button></div>${matEditor(grand, orders.map(o => o.id))}</section>
+      <h3 style="font-size:16px;margin:16px 0 8px">به تفکیک مشتری</h3>` +
+      [...byCus].map(([cid, os]) => {
+        const res = materialRows(os.map(o => o.id));
+        return `<section class="panel"><div class="page-head" style="margin:0 0 4px"><h3 style="font-size:15px">${esc(customerById(cid)?.name || '؟')}</h3><span class="muted">${fmtWeight(sumBy(os, o => orderTotals(o).weight))} محصول</span></div>
+          ${matLines(res)}
+          <div style="margin-top:10px">${os.map(o => `<details><summary>سفارش ${fmt(o.order_no || 0, 0)}: ${esc(itemsSummary(o))} <span class="st st-${o.status}">${stLabel(o.status)}</span></summary>
+            ${matLines(materialRows([o.id]))}<button class="btn ghost sm" data-act="ord-open" data-id="${o.id}">باز کردن سفارش</button></details>`).join('')}</div></section>`;
+      }).join('');
+  }
+  return `<p class="help" style="margin:10px 0 0">مواد لازم سفارش‌هایی که در این وضعیت‌ها هستند:</p><div class="chips">${chips}</div>${body}`;
+}
+function planText() {
+  const orders = S.orders.filter(o => S.planSt.includes(o.status)).sort((a, b) => (Number(a.order_no) || 0) - (Number(b.order_no) || 0));
+  if (!orders.length) return '';
+  const byCus = new Map(); orders.forEach(o => { if (!byCus.has(o.customer_id)) byCus.set(o.customer_id, []); byCus.get(o.customer_id).push(o); });
+  let t = 'جمع کل مواد لازم:\n' + matText(materialRows(orders.map(o => o.id))) + '\n\nبه تفکیک مشتری:';
+  byCus.forEach((os, cid) => { t += `\n\n${customerById(cid)?.name || '؟'}\n` + os.map(o => `سفارش ${fmt(o.order_no || 0, 0)}: ${itemsSummary(o)}`).join('\n') + '\n' + matText(materialRows(os.map(o => o.id))); });
+  return t;
+}
+
+/* ---------- orders: detail page ---------- */
+const kv = rows => '<dl class="kv">' + rows.map(([k, v]) => `<dt>${k}</dt><dd>${v === '' || v == null ? '—' : v}</dd>`).join('') + '</dl>';
+function viewOrderDetail() {
+  const o = orderById(S.oView);
+  if (!o) { S.oView = null; return viewOrders(); }
+  const c = customerById(o.customer_id), t = orderTotals(o), its = itemsOfOrder(o.id), ps = payState(o);
+  const pays = paymentsOfOrder(o.id).sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)));
+  return `<button class="btn ghost sm" data-act="ord-back">بازگشت به سفارش‌ها</button>
+  <section class="panel" style="margin-top:12px">
+    <div class="page-head" style="margin:0 0 6px"><h2>سفارش ${fmt(o.order_no || 0, 0)}</h2>
+      <span class="badges"><span class="st st-${o.status}">${stLabel(o.status)}</span>${o.status !== 'canceled' ? `<span class="st pay-${ps}">${PAY_LABEL[ps]}</span>` : ''}</span></div>
+    ${kv([['مشتری', `<button class="btn ghost sm" data-act="cus-open" data-id="${o.customer_id}">${esc(c?.name || '؟')}</button>${c?.phone ? ` <a href="tel:${esc(latin(c.phone))}" dir="ltr">${esc(c.phone)}</a>` : ''}`], ['تاریخ سفارش', fmtIso(o.order_date)], ['یادداشت', esc(o.note || '')]])}
+    <div class="actions" style="margin-top:12px"><button class="btn sm" data-act="ord-edit" data-id="${o.id}">ویرایش اقلام و مبلغ</button>
+      <button class="btn sm" data-act="copy-invoice" data-id="${o.id}">کپی متن فاکتور</button>
+      <button class="btn danger sm" data-act="ord-del" data-id="${o.id}">حذف سفارش</button></div>
+  </section>
+
+  <section class="panel"><h3 style="font-size:15px">وضعیت سفارش</h3>
+    <div class="chips">${STATUS.map(([k, tx]) => `<button class="chip ${o.status === k ? 'on' : ''}" data-act="st-set" data-id="${o.id}" data-v="${k}">${tx}</button>`).join('')}</div>
+    <p class="help">با انتخاب «ارسال‌شده» و «تحویل‌شده»، تاریخ امروز خودکار ثبت می‌شود (در بخش ارسال قابل ویرایش است).</p>
+  </section>
+
+  <section class="panel"><div class="page-head" style="margin:0 0 6px"><h3 style="font-size:15px">اطلاعات ارسال</h3><button class="btn sm" data-act="ord-ship" data-id="${o.id}">ویرایش</button></div>
+    ${kv([['روش ارسال', esc(o.delivery_method || '')], ['هزینه ارسال', t.fee ? money(t.fee) : ''], ['آدرس', esc(o.ship_address || c?.address || '')], ['کد رهگیری / پیک', esc(o.tracking_code || '')],
+      ['تحویل مدنظر', o.planned_date ? fmtIso(o.planned_date) : ''], ['تاریخ ارسال', o.shipped_at ? fmtIso(o.shipped_at) : ''], ['تاریخ تحویل', o.delivered_at ? fmtIso(o.delivered_at) : '']])}
+  </section>
+
+  <section class="panel"><h3 style="font-size:15px">اقلام و مبلغ</h3>
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>محصول</th><th>وزن</th><th>قیمت هر کیلو</th><th>مبلغ</th></tr></thead><tbody>
+    ${its.map(i => `<tr><td>${esc(productById(i.product_id)?.name || '؟')}</td><td class="n">${fmtWeight(Number(i.weight_g))}</td><td class="n">${money(Number(i.price_per_kg))}</td><td class="n">${money((Number(i.weight_g) / 1000) * Number(i.price_per_kg))}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="sum" style="margin-top:10px">
+      <div class="line"><span>جمع اقلام</span><span class="fill"></span><span class="amt">${money(t.itemsTotal)}</span></div>
+      ${t.fee ? `<div class="line"><span>هزینه ارسال</span><span class="fill"></span><span class="amt">${money(t.fee)}</span></div>` : ''}
+      ${t.discount ? `<div class="line"><span>تخفیف</span><span class="fill"></span><span class="amt">${money(t.discount)}</span></div>` : ''}
+      <div class="line"><span>مبلغ نهایی</span><span class="fill"></span><span class="tag">${money(t.total)}</span></div></div>
+  </section>
+
+  <section class="panel"><div class="page-head" style="margin:0 0 6px"><h3 style="font-size:15px">واریزی‌ها</h3><button class="btn sm primary" data-act="pay-new" data-cid="${o.customer_id}" data-oid="${o.id}">+ ثبت واریزی</button></div>
+    <div class="stat"><div><span class="muted">مبلغ نهایی</span><b>${money(t.total)}</b></div><div><span class="muted">پرداخت‌شده</span><b>${money(t.paid)}</b></div>
+      <div><span class="muted">${t.remaining < -0.5 ? 'اضافه‌پرداخت' : 'مانده'}</span><b class="${t.remaining > 0.5 ? 'profit-neg' : 'profit-pos'}">${money(Math.abs(t.remaining))}</b></div></div>
+    ${pays.length ? '<div class="list" style="margin-top:10px">' + pays.map(payRow).join('') + '</div>' : '<p class="muted" style="margin:10px 0 0">هنوز واریزی‌ای برای این سفارش ثبت نشده.</p>'}
+  </section>
+
+  <section class="panel"><div class="page-head" style="margin:0 0 6px"><h3 style="font-size:15px">مواد لازم برای این سفارش</h3><button class="btn sm" data-act="copy-order" data-id="${o.id}">کپی لیست</button></div>
+    ${matEditor(materialRows([o.id]), [o.id])}</section>`;
+}
+function payRow(p, showOrder) {
+  const o = showOrder && p.order_id ? orderById(p.order_id) : null;
+  return `<button class="item" data-act="pay-edit" data-id="${p.id}"><span><span class="name">${money(Number(p.amount))}</span><br><span class="sub">${fmtIso(p.paid_at)}${p.method ? ' — ' + esc(p.method) : ''}${p.reference ? ' — پیگیری ' + esc(p.reference) : ''}</span>${o ? `<br><span class="sub">برای سفارش ${fmt(o.order_no || 0, 0)}</span>` : ''}${p.note ? `<br><span class="sub">${esc(p.note)}</span>` : ''}</span><span class="sub">ویرایش</span></button>`;
+}
+
+/* ---------- orders: form ---------- */
+let OD = null, CUS_BACK = false;
+const newRow = () => ({ pid: '', weight: '', unit: 'g', price: '' });
+function openOrder(id, presetCustomer) {
+  if (!S.products.length) return toast('اول در تب «محصولات» حداقل یک محصول تعریف کن');
+  const o = id ? orderById(id) : null;
+  OD = { id: o?.id || null, customer_id: o?.customer_id || presetCustomer || '', date: isoToJ(o?.order_date || todayIso()), planned: isoToJ(o?.planned_date),
+    method: o?.delivery_method || '', fee: o && Number(o.delivery_fee) ? String(o.delivery_fee) : '', discount: o && Number(o.discount) ? String(o.discount) : '', note: o?.note || '',
+    items: o ? itemsOfOrder(o.id).map(i => { const w = Number(i.weight_g); return { pid: i.product_id, weight: String(w >= 1000 ? w / 1000 : w), unit: w >= 1000 ? 'kg' : 'g', price: String(i.price_per_kg) }; }) : [newRow()] };
+  if (!OD.items.length) OD.items.push(newRow());
+  renderOrderDlg();
+}
+function orderRowsHtml() {
+  return OD.items.map((r, i) => `<div class="orow"><select data-orow="${i}" data-f="pid" aria-label="محصول"><option value="">انتخاب محصول…</option>
+    ${S.products.map(p => `<option value="${p.id}" ${p.id === r.pid ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select>
+    <div class="orow-line"><input class="num" inputmode="decimal" data-orow="${i}" data-f="weight" value="${esc(r.weight)}" placeholder="وزن" aria-label="وزن">
+    <select data-orow="${i}" data-f="unit" aria-label="واحد"><option value="g" ${r.unit === 'g' ? 'selected' : ''}>گرم</option><option value="kg" ${r.unit === 'kg' ? 'selected' : ''}>کیلوگرم</option></select>
+    <input class="num" inputmode="decimal" data-orow="${i}" data-f="price" value="${esc(r.price)}" placeholder="قیمت هر کیلو" aria-label="قیمت هر کیلو">
+    <button class="x" data-act="o-delrow" data-i="${i}" aria-label="حذف قلم">×</button></div><div class="rowtot" id="ot-${i}"></div></div>`).join('');
+}
+function updateOSum() {
+  if (!OD) return;
+  let items = 0;
+  OD.items.forEach((r, i) => {
+    const w = parseNum(r.weight) * (r.unit === 'kg' ? 1000 : 1), p = productById(r.pid);
+    const price = String(r.price).trim() === '' ? Number(p?.sale_price_per_kg) || 0 : parseNum(r.price);
+    const el = $('#ot-' + i);
+    if (w > 0 && price >= 0) { const v = (w / 1000) * price; items += v; if (el) el.textContent = 'مبلغ این قلم: ' + money(v); } else if (el) el.textContent = '';
+  });
+  const fee = parseNum(OD.fee) || 0, disc = parseNum(OD.discount) || 0, el = $('#o-sum');
+  if (el) el.innerHTML = items > 0 ? `<div class="dsum">جمع اقلام: <b>${money(items)}</b>${fee ? ' — ارسال: <b>' + money(fee) + '</b>' : ''}${disc ? ' — تخفیف: <b>' + money(disc) + '</b>' : ''} — مبلغ نهایی: <b>${money(items + fee - disc)}</b></div>` : '';
+}
+function renderOrderDlg() {
+  const cs = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  openDlg(`<div class="dlg-body"><h3>${OD.id ? 'ویرایش سفارش' : 'سفارش جدید'}</h3>
+    <label for="o-cus">مشتری</label>
+    <div class="row2" style="grid-template-columns:1fr auto"><select id="o-cus" data-o="customer_id"><option value="">انتخاب مشتری…</option>${cs.map(c => `<option value="${c.id}" ${c.id === OD.customer_id ? 'selected' : ''}>${esc(c.name)}${c.phone ? ' — ' + esc(c.phone) : ''}</option>`).join('')}</select>
+    <button class="btn ghost sm" data-act="ord-newcus">+ مشتری جدید</button></div>
+    <div class="grid2"><div><label for="o-date">تاریخ سفارش (شمسی)</label><input id="o-date" class="num" data-o="date" value="${esc(OD.date)}" placeholder="1405/07/29"></div>
+    <div><label for="o-planned">تحویل مدنظر (اختیاری)</label><input id="o-planned" class="num" data-o="planned" value="${esc(OD.planned)}" placeholder="1405/07/30"></div></div>
+    <h4>اقلام سفارش</h4><div id="o-rows">${orderRowsHtml()}</div>
+    <button class="btn ghost sm" data-act="o-addrow">+ افزودن قلم</button>
+    <p class="help">قیمت هر کیلو را خالی بگذاری، قیمت فروش خود محصول گذاشته می‌شود. برای مشتری خاص می‌توانی قیمت را عوض کنی.</p>
+    <div class="grid2"><div><label for="o-method">روش ارسال</label><select id="o-method" data-o="method"><option value="">مشخص نشده</option>${SHIP_METHODS.map(m => `<option ${m === OD.method ? 'selected' : ''}>${m}</option>`).join('')}</select></div>
+    <div><label for="o-fee">هزینه ارسال (تومان)</label><input id="o-fee" class="num" inputmode="decimal" data-o="fee" value="${esc(OD.fee)}"></div></div>
+    <label for="o-disc">تخفیف (تومان)</label><input id="o-disc" class="num" inputmode="decimal" data-o="discount" value="${esc(OD.discount)}">
+    <div id="o-sum"></div>
+    <label for="o-note">یادداشت (اختیاری)</label><input id="o-note" data-o="note" value="${esc(OD.note)}">
+    <div class="actions"><button class="btn primary" data-act="ord-save">ذخیره سفارش</button><button class="btn ghost" data-act="dlg-close">انصراف</button></div></div>`);
+  updateOSum();
+}
+async function ordSave() {
+  const o = OD;
+  if (!o.customer_id) return toast('مشتری را انتخاب کن');
+  const date = jToIso(o.date); if (!date) return toast('تاریخ سفارش معتبر نیست؛ مثل ۱۴۰۵/۰۷/۲۹ بنویس');
+  const planned = o.planned.trim() ? jToIso(o.planned) : null; if (o.planned.trim() && !planned) return toast('تاریخ تحویل معتبر نیست');
+  const fee = o.fee.trim() === '' ? 0 : parseNum(o.fee), disc = o.discount.trim() === '' ? 0 : parseNum(o.discount);
+  if (!(fee >= 0) || !(disc >= 0)) return toast('هزینه ارسال یا تخفیف معتبر نیست');
+  const old = o.id ? orderById(o.id) : null, oldItems = o.id ? itemsOfOrder(o.id) : [];
+  if (old && old.customer_id !== o.customer_id && paymentsOfOrder(old.id).length) return toast('برای این سفارش واریزی ثبت شده؛ مشتری قابل تغییر نیست.');
+  const rows = [];
+  for (const r of o.items) {
+    if (!r.pid && String(r.weight).trim() === '') continue;
+    if (!r.pid) return toast('برای هر ردیف یک محصول انتخاب کن');
+    const w = parseNum(r.weight) * (r.unit === 'kg' ? 1000 : 1);
+    if (!(w > 0)) return toast('وزن هر قلم را وارد کن');
+    const p = productById(r.pid);
+    const price = String(r.price).trim() === '' ? Number(p?.sale_price_per_kg) || 0 : parseNum(r.price);
+    if (!(price >= 0)) return toast('قیمت هر کیلو معتبر نیست');
+    const prev = oldItems.find(x => x.product_id === r.pid);
+    rows.push({ product_id: r.pid, weight_g: w, price_per_kg: price, cost_per_kg: prev ? Number(prev.cost_per_kg) : productCost(p).costPerKg });
+  }
+  if (!rows.length) return toast('حداقل یک قلم به سفارش اضافه کن');
+  const payload = { customer_id: o.customer_id, order_date: date, planned_date: planned, delivery_method: o.method || null, delivery_fee: fee, discount: disc, note: o.note.trim() || null };
+  await guard(async () => {
+    let oid = o.id;
+    if (oid) await Store.update('orders', oid, payload);
+    else { const [r] = await Store.insert('orders', [{ ...payload, order_no: nextOrderNo(), status: 'new', ship_address: customerById(o.customer_id)?.address || null }]); oid = r.id; }
+    await Store.insert('order_items', rows.map((r, i) => ({ ...r, order_id: oid, position: i })));
+    if (oldItems.length) await Store.remove('order_items', oldItems.map(i => i.id));
+    await loadAll(); closeDlg(); S.tab = 'orders'; S.ordMode = 'list'; S.oView = oid; render(); window.scrollTo(0, 0); toast('سفارش ذخیره شد');
+  });
+}
+async function ordDel(id) {
+  const o = orderById(id); if (!o) return;
+  const np = paymentsOfOrder(id).length;
+  if (!confirm(`سفارش ${fmt(o.order_no || 0, 0)} حذف شود؟` + (np ? `\n${fmt(np, 0)} واریزی ثبت‌شده‌ی این سفارش می‌ماند ولی به هیچ سفارشی وصل نخواهد بود.` : ''))) return;
+  await guard(async () => { await Store.remove('orders', [id]); S.oView = null; await loadAll(); render(); toast('سفارش حذف شد'); });
+}
+async function setStatus(id, key) {
+  const o = orderById(id); if (!o || o.status === key) return;
+  if (key === 'canceled' && !confirm('سفارش لغو شود؟ از مواد لازم و حساب مشتری کم می‌شود.')) return;
+  const patch = { status: key };
+  if (key === 'shipped' && !o.shipped_at) patch.shipped_at = todayIso();
+  if (key === 'delivered' && !o.delivered_at) patch.delivered_at = todayIso();
+  await guard(async () => { await Store.update('orders', id, patch); await loadAll(); render(); toast('وضعیت: ' + stLabel(key)); });
+}
+function openShip(id) {
+  const o = orderById(id); if (!o) return;
+  const methods = SHIP_METHODS.includes(o.delivery_method) || !o.delivery_method ? SHIP_METHODS : [...SHIP_METHODS, o.delivery_method];
+  openDlg(`<div class="dlg-body"><h3>اطلاعات ارسال سفارش ${fmt(o.order_no || 0, 0)}</h3>
+    <div class="grid2"><div><label for="s-method">روش ارسال</label><select id="s-method"><option value="">مشخص نشده</option>${methods.map(m => `<option ${m === o.delivery_method ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+    <div><label for="s-fee">هزینه ارسال (تومان)</label><input id="s-fee" class="num" inputmode="decimal" value="${esc(Number(o.delivery_fee) || '')}"></div></div>
+    <label for="s-addr">آدرس تحویل</label><textarea id="s-addr" rows="3">${esc(o.ship_address || customerById(o.customer_id)?.address || '')}</textarea>
+    <label for="s-track">کد رهگیری یا نام پیک</label><input id="s-track" value="${esc(o.tracking_code)}">
+    <div class="grid2"><div><label for="s-planned">تحویل مدنظر</label><input id="s-planned" class="num" value="${esc(isoToJ(o.planned_date))}" placeholder="1405/07/30"></div>
+    <div><label for="s-shipped">تاریخ ارسال</label><input id="s-shipped" class="num" value="${esc(isoToJ(o.shipped_at))}"></div></div>
+    <label for="s-deliv">تاریخ تحویل به مشتری</label><input id="s-deliv" class="num" value="${esc(isoToJ(o.delivered_at))}">
+    <p class="help">تاریخ‌ها را شمسی و مثل ۱۴۰۵/۰۷/۲۹ بنویس؛ خالی هم می‌شود.</p>
+    <div class="actions"><button class="btn primary" data-act="ship-save" data-id="${id}">ذخیره</button><button class="btn ghost" data-act="dlg-close">انصراف</button></div></div>`);
+}
+async function shipSave(id) {
+  const dates = {}; const names = { planned_date: 's-planned', shipped_at: 's-shipped', delivered_at: 's-deliv' };
+  for (const [f, el] of Object.entries(names)) { const v = $('#' + el).value.trim(); if (!v) dates[f] = null; else { const iso = jToIso(v); if (!iso) return toast('یکی از تاریخ‌ها معتبر نیست'); dates[f] = iso; } }
+  const rawFee = $('#s-fee').value.trim(), fee = rawFee === '' ? 0 : parseNum(rawFee);
+  if (!(fee >= 0)) return toast('هزینه ارسال معتبر نیست');
+  await guard(async () => {
+    await Store.update('orders', id, { delivery_method: $('#s-method').value || null, delivery_fee: fee, ship_address: $('#s-addr').value.trim() || null, tracking_code: $('#s-track').value.trim() || null, ...dates });
+    await loadAll(); closeDlg(); render(); toast('ذخیره شد');
+  });
+}
+
+/* ---------- customers ---------- */
+function viewCustomers() {
+  if (S.cView) return viewCustomerDetail();
+  return `<div class="page-head"><h2>مشتریان</h2><span class="prod-actions"><button class="btn ghost" data-act="pay-new">ثبت واریزی</button><button class="btn primary" data-act="cus-new">+ مشتری جدید</button></span></div>
+    ${S.customers.length > 5 ? `<input type="search" data-bind="cq" placeholder="جستجوی نام یا تلفن…" value="${esc(S.cq)}" aria-label="جستجو">` : ''}
+    <div id="cus-list" style="margin-top:10px">${cusListHtml()}</div>`;
+}
+function cusListHtml() {
+  if (!S.customers.length) return emptyBox('هنوز مشتری‌ای ثبت نشده', 'نام، تلفن و آدرس مشتری‌ها را اینجا نگه دار. هنگام ثبت سفارش هم می‌توانی مشتری جدید بسازی.', '<button class="btn primary" data-act="cus-new">+ ثبت اولین مشتری</button>', 'customers');
+  const q = latin(S.cq).trim();
+  let list = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  if (q) list = list.filter(c => c.name.includes(q) || latin(c.phone || '').includes(q));
+  if (!list.length) return '<div class="empty"><p style="margin:0">موردی پیدا نشد.</p></div>';
+  return '<div class="list">' + list.map(c => {
+    const st = customerStats(c.id);
+    return `<button class="item" data-act="cus-open" data-id="${c.id}">${avatar(c.name)}<span class="grow"><span class="name">${esc(c.name)}</span><br><span class="sub">${c.phone ? '<span dir="ltr">' + esc(c.phone) + '</span> — ' : ''}${st.count ? fmt(st.count, 0) + ' سفارش' : 'بدون سفارش'}</span></span>${st.count || st.paid ? balanceBadge(st.balance) : ''}</button>`;
+  }).join('') + '</div>';
+}
+function viewCustomerDetail() {
+  const c = customerById(S.cView);
+  if (!c) { S.cView = null; return viewCustomers(); }
+  const st = customerStats(c.id);
+  const orders = S.orders.filter(o => o.customer_id === c.id).sort((a, b) => (Number(b.order_no) || 0) - (Number(a.order_no) || 0));
+  const pays = S.payments.filter(p => p.customer_id === c.id).sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)));
+  return `<button class="btn ghost sm" data-act="cus-back">بازگشت به مشتریان</button>
+  <section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 6px"><h2>${esc(c.name)}</h2>${st.count || st.paid ? balanceBadge(st.balance) : ''}</div>
+    ${kv([['تلفن', c.phone ? `<a href="tel:${esc(latin(c.phone))}" dir="ltr">${esc(c.phone)}</a>` : ''], ['آدرس', esc(c.address || '')], ['آیدی پیام‌رسان', c.messenger_id ? `<span dir="ltr">${esc(c.messenger_id)}</span>` : ''], ['یادداشت', esc(c.note || '')]])}
+    <div class="actions" style="margin-top:12px"><button class="btn primary sm" data-act="ord-new" data-cid="${c.id}">+ سفارش جدید</button><button class="btn sm" data-act="pay-new" data-cid="${c.id}">+ ثبت واریزی</button>
+      <button class="btn ghost sm" data-act="cus-edit" data-id="${c.id}">ویرایش</button><button class="btn danger sm" data-act="cus-del" data-id="${c.id}">حذف</button></div></section>
+  <div class="stat" style="margin-bottom:14px"><div><span class="muted">تعداد سفارش</span><b>${fmt(st.count, 0)}</b></div><div><span class="muted">جمع خرید</span><b>${money(st.sales)}</b></div>
+    <div><span class="muted">جمع پرداختی</span><b>${money(st.paid)}</b></div><div><span class="muted">${st.balance < -0.5 ? 'بستانکار' : 'مانده بدهی'}</span><b class="${st.balance > 0.5 ? 'profit-neg' : 'profit-pos'}">${money(Math.abs(st.balance))}</b></div></div>
+  <h3 style="font-size:16px;margin:0 0 8px">سفارش‌ها</h3>${orders.length ? '<div class="list">' + orders.map(orderRow).join('') + '</div>' : '<div class="empty"><p style="margin:0">هنوز سفارشی ندارد.</p></div>'}
+  <h3 style="font-size:16px;margin:18px 0 8px">واریزی‌ها</h3>${pays.length ? '<div class="list">' + pays.map(p => payRow(p, true)).join('') + '</div>' : '<div class="empty"><p style="margin:0">هنوز واریزی‌ای ثبت نشده.</p></div>'}`;
+}
+function openCustomer(id, toOrder) {
+  const c = id ? customerById(id) : null; CUS_BACK = !!toOrder;
+  openDlg(`<div class="dlg-body"><h3>${c ? 'ویرایش مشتری' : 'مشتری جدید'}</h3>
+    <label for="c-name">نام و نام خانوادگی</label><input id="c-name" value="${esc(c?.name)}">
+    <label for="c-phone">تلفن</label><input id="c-phone" class="num" inputmode="tel" value="${esc(c?.phone)}" placeholder="0912…">
+    <label for="c-addr">آدرس</label><textarea id="c-addr" rows="3">${esc(c?.address)}</textarea>
+    <label for="c-msg">آیدی یا نام در پیام‌رسان (اختیاری)</label><input id="c-msg" class="num" value="${esc(c?.messenger_id)}">
+    <label for="c-note">یادداشت (اختیاری)</label><input id="c-note" value="${esc(c?.note)}">
+    <div class="actions"><button class="btn primary" data-act="cus-save" data-id="${id || ''}">ذخیره</button><button class="btn ghost" data-act="cus-cancel">انصراف</button></div></div>`);
+  setTimeout(() => $('#c-name')?.focus(), 60);
+}
+async function cusSave(id) {
+  const name = $('#c-name').value.trim(), phone = $('#c-phone').value.trim();
+  if (!name) return toast('نام مشتری را وارد کن');
+  if (S.customers.some(x => x.id !== id && x.name.trim() === name && (x.phone || '') === phone)) return toast('مشتری‌ای با همین نام و تلفن قبلاً ثبت شده');
+  const payload = { name, phone: phone || null, address: $('#c-addr').value.trim() || null, messenger_id: $('#c-msg').value.trim() || null, note: $('#c-note').value.trim() || null };
+  await guard(async () => {
+    let cid = id;
+    if (id) await Store.update('customers', id, payload); else { const [r] = await Store.insert('customers', [payload]); cid = r.id; }
+    await loadAll();
+    if (CUS_BACK && OD) { CUS_BACK = false; OD.customer_id = cid; renderOrderDlg(); toast('مشتری ذخیره شد'); }
+    else { closeDlg(); render(); toast('ذخیره شد'); }
+  });
+}
+function cusCancel() { if (CUS_BACK && OD) { CUS_BACK = false; renderOrderDlg(); } else closeDlg(); }
+async function cusDel(id) {
+  const c = customerById(id); if (!c) return;
+  if (S.orders.some(o => o.customer_id === id)) return toast('این مشتری سفارش دارد. اول سفارش‌هایش را حذف کن.');
+  const np = S.payments.filter(p => p.customer_id === id).length;
+  if (!confirm(`مشتری «${c.name}» حذف شود؟` + (np ? `\n${fmt(np, 0)} واریزی‌اش هم حذف می‌شود.` : ''))) return;
+  await guard(async () => { await Store.remove('customers', [id]); S.cView = null; await loadAll(); render(); toast('حذف شد'); });
+}
+
+/* ---------- payments ---------- */
+let PD = null;
+function openPayment(id, cid, oid) {
+  if (!S.customers.length) return toast('اول یک مشتری ثبت کن');
+  const p = id ? S.payments.find(x => x.id === id) : null;
+  PD = { id: p?.id || null, customer_id: p?.customer_id || cid || '', order_id: p?.order_id || oid || '', amount: p ? String(p.amount) : '', date: isoToJ(p?.paid_at || todayIso()),
+    method: p?.method || PAY_METHODS[0], reference: p?.reference || '', note: p?.note || '' };
+  if (!p && PD.order_id) { const o = orderById(PD.order_id); if (o) { PD.customer_id = o.customer_id; const r = orderTotals(o).remaining; if (r > 0) PD.amount = String(Math.round(r)); } }
+  renderPayDlg();
+}
+function renderPayDlg() {
+  const cs = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  const os = S.orders.filter(o => o.customer_id === PD.customer_id && (o.status !== 'canceled' || o.id === PD.order_id)).sort((a, b) => (Number(b.order_no) || 0) - (Number(a.order_no) || 0));
+  const methods = PAY_METHODS.includes(PD.method) ? PAY_METHODS : [...PAY_METHODS, PD.method];
+  openDlg(`<div class="dlg-body"><h3>${PD.id ? 'ویرایش واریزی' : 'ثبت واریزی'}</h3>
+    <label for="p-cus">مشتری</label><select id="p-cus" data-p="customer_id"><option value="">انتخاب مشتری…</option>${cs.map(c => `<option value="${c.id}" ${c.id === PD.customer_id ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+    <label for="p-ord">مربوط به کدام سفارش؟</label><select id="p-ord" data-p="order_id" ${PD.customer_id ? '' : 'disabled'}><option value="">بدون سفارش مشخص (واریزی عمومی)</option>
+      ${os.map(o => `<option value="${o.id}" ${o.id === PD.order_id ? 'selected' : ''}>سفارش ${fmt(o.order_no || 0, 0)} — مانده ${money(Math.max(0, orderTotals(o).remaining))}</option>`).join('')}</select>
+    <div class="grid2"><div><label for="p-amt">مبلغ (تومان)</label><input id="p-amt" class="num" inputmode="decimal" data-p="amount" value="${esc(PD.amount)}"></div>
+    <div><label for="p-date">تاریخ واریز (شمسی)</label><input id="p-date" class="num" data-p="date" value="${esc(PD.date)}" placeholder="1405/07/29"></div></div>
+    <div class="grid2"><div><label for="p-method">روش پرداخت</label><select id="p-method" data-p="method">${methods.map(m => `<option ${m === PD.method ? 'selected' : ''}>${esc(m)}</option>`).join('')}</select></div>
+    <div><label for="p-ref">شماره پیگیری / ۴ رقم آخر کارت</label><input id="p-ref" class="num" data-p="reference" value="${esc(PD.reference)}"></div></div>
+    <label for="p-note">یادداشت (اختیاری)</label><input id="p-note" data-p="note" value="${esc(PD.note)}">
+    <div class="actions"><button class="btn primary" data-act="pay-save">ذخیره</button><button class="btn ghost" data-act="dlg-close">انصراف</button>
+    ${PD.id ? `<button class="btn danger" data-act="pay-del" data-id="${PD.id}">حذف</button>` : ''}</div></div>`);
+}
+async function paySave() {
+  const amount = parseNum(PD.amount), date = jToIso(PD.date);
+  if (!PD.customer_id) return toast('مشتری را انتخاب کن');
+  if (!(amount > 0)) return toast('مبلغ واریزی را وارد کن');
+  if (!date) return toast('تاریخ معتبر نیست؛ مثل ۱۴۰۵/۰۷/۲۹ بنویس');
+  const payload = { customer_id: PD.customer_id, order_id: PD.order_id || null, amount, paid_at: date, method: PD.method || null, reference: PD.reference.trim() || null, note: PD.note.trim() || null };
+  await guard(async () => {
+    if (PD.id) await Store.update('payments', PD.id, payload); else await Store.insert('payments', [payload]);
+    await loadAll(); closeDlg(); render(); toast('واریزی ثبت شد');
+  });
+}
+async function payDel(id) {
+  if (!confirm('این واریزی حذف شود؟')) return;
+  await guard(async () => { await Store.remove('payments', [id]); await loadAll(); closeDlg(); render(); toast('حذف شد'); });
+}
+
+/* ---------- extra exports ---------- */
+function exportOrders() {
+  const rows = [['شماره سفارش', 'تاریخ', 'مشتری', 'تلفن', 'وضعیت', 'محصول', 'وزن (گرم)', 'قیمت هر کیلو', 'مبلغ قلم', 'هزینه ارسال', 'تخفیف', 'مبلغ نهایی سفارش', 'پرداخت‌شده']];
+  S.orders.slice().sort((a, b) => (Number(a.order_no) || 0) - (Number(b.order_no) || 0)).forEach(o => {
+    const c = customerById(o.customer_id), t = orderTotals(o);
+    itemsOfOrder(o.id).forEach(i => rows.push([o.order_no, isoToJ(o.order_date), c?.name || '', c?.phone || '', stLabel(o.status), productById(i.product_id)?.name || '', i.weight_g, i.price_per_kg, Math.round((Number(i.weight_g) / 1000) * Number(i.price_per_kg)), t.fee, t.discount, Math.round(t.total), t.paid]));
+  });
+  download('orders.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+function exportPayments() {
+  const rows = [['تاریخ', 'مشتری', 'سفارش', 'مبلغ', 'روش', 'شماره پیگیری', 'یادداشت']];
+  S.payments.slice().sort((a, b) => String(a.paid_at).localeCompare(String(b.paid_at))).forEach(p => rows.push([isoToJ(p.paid_at), customerById(p.customer_id)?.name || '', p.order_id ? (orderById(p.order_id)?.order_no ?? '') : '', p.amount, p.method || '', p.reference || '', p.note || '']));
+  download('payments.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+
+const SQL_CHECK = `-- بررسی سلامت دیتابیس (فقط می‌خواند و چیزی را تغییر نمی‌دهد)
+-- در SQL Editor پروژه‌ی Supabase اجرا کن؛ نتیجه یک جدول چندردیفی است.
+with
+tbl(name) as (
+  values ('kb_materials'), ('kb_material_prices'), ('kb_products'), ('kb_recipe_items'), ('kb_customers'),
+         ('kb_orders'), ('kb_order_items'), ('kb_payments'), ('kb_business_profile')
+),
+env as (
+  select 1 as ord, 'محیط'::text as بخش, 'نوع دیتابیس'::text as مورد,
+    (case when to_regnamespace('auth') is not null and exists (select 1 from pg_roles where rolname = 'authenticated')
+          then '✓ Supabase'
+          else '✗ این Supabase نیست (schema auth یا نقش authenticated پیدا نشد). احتمالاً در Neon یا دیتابیس دیگری اجرا می‌کنی' end)::text as نتیجه
+  union all
+  select 2, 'محیط', 'دیتابیس و نسخه', (current_database() || ' / ' || split_part(version(), ' on ', 1))::text
+  union all
+  select 3, 'امنیت', 'تعداد کاربران ثبت‌شده (auth.users)',
+    (case when to_regclass('auth.users') is null then '— (جدول auth.users پیدا نشد)'
+          else coalesce((xpath('/row/c/text()', query_to_xml('select count(*) as c from auth.users', false, true, '')))[1]::text, '?')
+               || ' نفر (باید فقط خودت و اعضای کارگاه باشند؛ اگر ناشناس هست ثبت‌نام عمومی را ببند)' end)::text
+),
+tables as (
+  select (10 + row_number() over (order by t.name))::int as ord, 'جدول‌ها'::text as بخش, t.name::text as مورد,
+    (case
+      when c.oid is null then '✗ ساخته نشده'
+      else '✓ ' || coalesce((xpath('/row/c/text()', query_to_xml(format('select count(*) as c from public.%I', t.name), false, true, '')))[1]::text, '?') || ' ردیف'
+        || (case when c.relrowsecurity then '، امنیت ردیفی روشن' else '، ✗ امنیت ردیفی (RLS) خاموش' end)
+        || (case when (select count(*) from pg_policies p where p.schemaname = 'public' and p.tablename = t.name) > 0
+                 then '، سیاست دسترسی دارد' else '، ✗ سیاست دسترسی ندارد' end)
+        || (case when not exists (select 1 from pg_roles where rolname = 'authenticated') then ''
+                 when has_table_privilege('authenticated', c.oid, 'select') and has_table_privilege('authenticated', c.oid, 'insert')
+                      and has_table_privilege('authenticated', c.oid, 'update') and has_table_privilege('authenticated', c.oid, 'delete')
+                 then '، دسترسی کاربر ✓' else '، ✗ کاربر دسترسی کامل ندارد' end)
+    end)::text as نتیجه
+  from tbl t
+  left join pg_class c on c.relname = t.name and c.relnamespace = 'public'::regnamespace and c.relkind = 'r'
+),
+fk as (
+  select 30 as ord, 'ساختار'::text as بخش, 'ارتباط‌های بین جدول‌ها (باید ۸ باشد)'::text as مورد,
+    (select (case when count(*) = 8 then '✓ ' else '✗ ' end) || count(*)::text
+       from pg_constraint k join pg_class c on c.oid = k.conrelid
+      where k.contype = 'f' and c.relnamespace = 'public'::regnamespace and left(c.relname, 3) = 'kb_')::text as نتیجه
+),
+legacy as (
+  select 31, 'اطلاعاتی'::text, 'جدول‌های قدیمی بدون kb_ در این دیتابیس'::text,
+    coalesce(nullif((select string_agg(relname::text, '، ' order by relname) from pg_class
+                      where relnamespace = 'public'::regnamespace and relkind = 'r'
+                        and relname in ('materials','material_prices','products','recipe_items','customers','orders','order_items','payments','business_profile')), ''), 'ندارد')::text
+),
+quality as (
+  select 40, 'کیفیت داده'::text, 'مواد اولیه بدون قیمت'::text,
+    (case when to_regclass('public.kb_materials') is null then '—'
+          else coalesce((xpath('/row/c/text()', query_to_xml('select count(*) as c from public.kb_materials where price is null or price <= 0', false, true, '')))[1]::text, '?') end)::text
+  union all
+  select 41, 'کیفیت داده', 'محصولات بدون دستور تهیه',
+    (case when to_regclass('public.kb_products') is null or to_regclass('public.kb_recipe_items') is null then '—'
+          else coalesce((xpath('/row/c/text()', query_to_xml('select count(*) as c from public.kb_products p where not exists (select 1 from public.kb_recipe_items r where r.product_id = p.id)', false, true, '')))[1]::text, '?') end)::text
+  union all
+  select 42, 'کیفیت داده', 'محصولات بدون قیمت فروش',
+    (case when to_regclass('public.kb_products') is null then '—'
+          else coalesce((xpath('/row/c/text()', query_to_xml('select count(*) as c from public.kb_products where sale_price_per_kg is null or sale_price_per_kg <= 0', false, true, '')))[1]::text, '?') end)::text
+  union all
+  select 43, 'کیفیت داده', 'سفارش‌های بدون قلم',
+    (case when to_regclass('public.kb_orders') is null or to_regclass('public.kb_order_items') is null then '—'
+          else coalesce((xpath('/row/c/text()', query_to_xml('select count(*) as c from public.kb_orders o where not exists (select 1 from public.kb_order_items i where i.order_id = o.id)', false, true, '')))[1]::text, '?') end)::text
+)
+select بخش, مورد, نتیجه
+from (
+  select * from env
+  union all select * from tables
+  union all select * from fk
+  union all select * from legacy
+  union all select * from quality
+) x
+order by ord;
+`;
+
+/* ---------- health check ---------- */
+const EXPECT_COLS = {
+  materials: 'id,name,unit,price,note,created_at',
+  material_prices: 'id,material_id,price,created_at',
+  products: 'id,name,base_weight_g,sale_price_per_kg,note,created_at',
+  recipe_items: 'id,product_id,material_id,amount,unit,position,created_at',
+  customers: 'id,name,phone,address,messenger_id,note,created_at',
+  orders: 'id,order_no,customer_id,order_date,planned_date,status,delivery_method,delivery_fee,discount,ship_address,tracking_code,shipped_at,delivered_at,note,created_at',
+  order_items: 'id,order_id,product_id,weight_g,price_per_kg,cost_per_kg,position,created_at',
+  payments: 'id,customer_id,order_id,amount,paid_at,method,reference,note,created_at',
+  business_profile: 'id,data,created_at'
+};
+function keyInfo(key) {
+  key = String(key || '').trim();
+  if (/^sb_secret_/i.test(key)) return { kind: 'secret', danger: true };
+  if (/^sb_publishable_/i.test(key)) return { kind: 'publishable' };
+  const p = key.split('.');
+  if (p.length === 3) {
+    try { const j = JSON.parse(atob(p[1].replace(/-/g, '+').replace(/_/g, '/'))); return { kind: j.role || 'jwt', ref: j.ref, danger: j.role === 'service_role' }; } catch (_) { /* not a JWT */ }
+  }
+  return { kind: 'unknown' };
+}
+function integrityChecks(add) {
+  const G = 'صحت اطلاعات', nm = (arr, f, n = 3) => arr.slice(0, n).map(f).join('، ') + (arr.length > n ? ' و …' : '');
+  const chk = (bad, okTitle, badTitle, detail, fix, status = 'warn') =>
+    bad.length ? add(G, status, badTitle + ': ' + fmt(bad.length, 0), detail(bad), fix) : add(G, 'ok', okTitle);
+  const oNo = o => 'سفارش ' + fmt(o.order_no || 0, 0);
+  add(G, 'info', 'خلاصه‌ی اطلاعات', `${fmt(S.materials.length, 0)} ماده، ${fmt(S.products.length, 0)} محصول، ${fmt(S.customers.length, 0)} مشتری، ${fmt(S.orders.length, 0)} سفارش، ${fmt(S.payments.length, 0)} واریزی`);
+  chk(S.items.filter(i => !matById(i.material_id)), 'دستور تهیه‌ها به مواد موجود وصل‌اند', 'دستور تهیه‌ی وصل‌نشده به ماده', b => nm(b, i => productById(i.product_id)?.name || '؟'), 'دستور آن محصولات را باز کن و ماده‌ی درست انتخاب کن.', 'fail');
+  chk(S.items.filter(i => !productById(i.product_id)), 'همه‌ی ردیف‌های دستور تهیه به محصول وصل‌اند', 'ردیف دستور تهیه بدون محصول', b => nm(b, () => 'ردیف یتیم'), 'از تنظیمات ← پاک‌سازی، یا دوباره‌سازی محصول استفاده کن.', 'fail');
+  chk(S.items.filter(i => { const m = matById(i.material_id); return m && !rowCompat(m, i); }), 'واحد مواد در دستورها با واحد ماده هم‌خانواده است', 'واحد ناسازگار در دستور تهیه',
+    b => nm(b, i => `${productById(i.product_id)?.name || '؟'} ← ${matById(i.material_id)?.name}`), 'واحد ماده یا مقدار آن را در دستور تهیه اصلاح کن (مثلاً گرم با کیلو).', 'fail');
+  chk(S.materials.filter(m => !(Number(m.price) > 0) && S.items.some(i => i.material_id === m.id)), 'همه‌ی مواد مصرفی قیمت دارند', 'ماده‌ی مصرفی بدون قیمت', b => nm(b, m => m.name), 'در تب مواد اولیه قیمتشان را بنویس، وگرنه قیمت تمام‌شده کمتر از واقع حساب می‌شود.');
+  chk(S.products.filter(p => !itemsOf(p.id).length), 'همه‌ی محصولات دستور تهیه دارند', 'محصول بدون دستور تهیه', b => nm(b, p => p.name), 'مواد لازم‌شان را در تب محصولات ثبت کن.');
+  chk(S.products.filter(p => !(Number(p.sale_price_per_kg) > 0)), 'همه‌ی محصولات قیمت فروش دارند', 'محصول بدون قیمت فروش', b => nm(b, p => p.name), 'قیمت فروش هر کیلو را در محصول بنویس.');
+  chk(S.orders.filter(o => !customerById(o.customer_id)), 'همه‌ی سفارش‌ها مشتری دارند', 'سفارش بدون مشتری', b => nm(b, oNo), 'سفارش را ویرایش کن و مشتری را انتخاب کن.', 'fail');
+  chk(S.orderItems.filter(i => !orderById(i.order_id) || !productById(i.product_id)), 'اقلام سفارش‌ها سالم‌اند', 'قلم سفارش با ارجاع خراب', b => nm(b, () => 'یک قلم'), 'سفارش مربوط را دوباره ثبت کن.', 'fail');
+  chk(S.orders.filter(o => o.status !== 'canceled' && !itemsOfOrder(o.id).length), 'همه‌ی سفارش‌ها قلم دارند', 'سفارش بدون قلم', b => nm(b, oNo), 'سفارش را ویرایش کن یا حذفش کن.');
+  chk(S.payments.filter(p => !customerById(p.customer_id) || (p.order_id && !orderById(p.order_id))), 'واریزی‌ها به مشتری و سفارش وصل‌اند', 'واریزی با ارجاع خراب', b => nm(b, p => money(Number(p.amount))), 'واریزی را ویرایش کن.');
+  const seen = new Map(); S.orders.forEach(o => { if (o.order_no != null) seen.set(o.order_no, (seen.get(o.order_no) || 0) + 1); });
+  chk([...seen].filter(([, c]) => c > 1), 'شماره‌ی سفارش‌ها تکراری نیست', 'شماره‌ی سفارش تکراری', b => nm(b, ([n]) => 'شماره ' + fmt(n, 0)), 'معمولاً از ثبت هم‌زمان در دو دستگاه است؛ مشکلی برای حساب‌ها ایجاد نمی‌کند.');
+  chk(S.orders.filter(o => o.status !== 'canceled' && orderTotals(o).remaining < -0.5), 'اضافه‌پرداختی وجود ندارد', 'سفارش با اضافه‌پرداخت', b => nm(b, oNo), 'واریزی‌های آن سفارش را بررسی کن.');
+  chk(S.orders.filter(o => o.status === 'delivered' && payState(o) !== 'paid'), 'سفارش تحویل‌شده‌ی تسویه‌نشده نداری', 'تحویل‌شده ولی تسویه‌نشده', b => nm(b, oNo), 'واریزی را ثبت کن یا با مشتری پیگیری کن.');
+  chk(S.orders.filter(o => OPEN_STATUSES.includes(o.status) && itemsOfOrder(o.id).some(i => !itemsOf(i.product_id).length)), 'مواد لازم همه‌ی سفارش‌های باز قابل محاسبه است', 'سفارش باز با محصولِ بدون دستور تهیه', b => nm(b, oNo), 'دستور تهیه‌ی آن محصولات را کامل کن تا لیست مواد کامل شود.');
+}
+async function runHealth() {
+  const R = [], add = (group, status, title, detail = '', fix = '') => R.push({ group, status, title, detail, fix });
+  const local = Store.mode === 'local';
+  let tablesOk = true;
+  if (local) {
+    add('اتصال', 'info', 'حالت آزمایشی (بدون دیتابیس)', 'اطلاعات فقط در همین مرورگر ذخیره می‌شود و روی دستگاه دیگر دیده نمی‌شود.', 'برای استفاده‌ی واقعی: تنظیمات ← اتصال به دیتابیس Supabase.');
+    try { localStorage.setItem('kb_hc', '1'); localStorage.removeItem('kb_hc'); add('اتصال', 'ok', 'ذخیره‌سازی مرورگر کار می‌کند'); }
+    catch (e) { add('اتصال', 'fail', 'مرورگر اجازه‌ی ذخیره‌سازی نمی‌دهد', String((e && e.message) || e), 'اگر در حالت خصوصی (Private) هستی، از آن خارج شو.'); }
+    const kb = Math.round((localStorage.getItem(Local.key) || '').length / 1024);
+    add('اتصال', kb > 3500 ? 'warn' : 'ok', 'حجم اطلاعات ذخیره‌شده: ' + fmt(kb, 0) + ' کیلوبایت', kb > 3500 ? 'نزدیک سقف ذخیره‌سازی مرورگر است.' : '', kb > 3500 ? 'پشتیبان بگیر و به Supabase منتقل کن.' : '');
+  } else {
+    const cfg = getCfg();
+    let host = ''; try { host = new URL(cfg.url).hostname; } catch (_) { /* invalid */ }
+    add('اتصال', window.supabase ? 'ok' : 'fail', window.supabase ? 'کتابخانه‌ی اتصال بارگذاری شد' : 'کتابخانه‌ی Supabase بارگذاری نشد', '', window.supabase ? '' : 'اینترنت را بررسی کن و صفحه را دوباره باز کن.');
+    if (!host) add('اتصال', 'fail', 'آدرس پروژه وارد نشده یا نامعتبر است', cfg.url || '', 'در «تغییر اتصال» آدرس را مثل https://xxxx.supabase.co بنویس.');
+    else if (/\.supabase\.(co|com)$/i.test(host)) add('اتصال', 'ok', 'آدرس پروژه', host);
+    else add('اتصال', 'warn', 'آدرس شبیه Supabase نیست', host, 'Project URL باید مثل https://xxxx.supabase.co باشد. اگر آدرس دیتابیس دیگری (مثل Neon) را گذاشته‌ای، اشتباه است.');
+    const ki = keyInfo(cfg.key);
+    if (!cfg.key) add('اتصال', 'fail', 'کلید وارد نشده است', '', 'کلید anon یا publishable را از Project Settings ← API بردار.');
+    else if (ki.danger) add('امنیت', 'fail', 'کلید واردشده، کلید مدیریتی (service_role / secret) است', 'هر کسی که فایل برنامه را ببیند به همه‌ی اطلاعات دسترسی کامل پیدا می‌کند.', 'فوراً از برنامه پاکش کن و در Supabase عوضش کن. فقط کلید anon یا publishable را در برنامه بگذار.');
+    else if (ki.kind === 'unknown') add('اتصال', 'warn', 'نوع کلید شناخته نشد', '', 'کلید باید anon یا publishable باشد.');
+    else add('اتصال', 'ok', 'نوع کلید مناسب است', ki.kind);
+    if (ki.ref && host && !host.startsWith(ki.ref + '.')) add('اتصال', 'fail', 'کلید مال پروژه‌ی دیگری است', `کلید برای «${ki.ref}» است ولی آدرس ${host} است.`, 'آدرس و کلید را از یک پروژه بردار (Project Settings ← API).');
+    if (host && cfg.key) {
+      const t0 = performance.now();
+      try {
+        const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+        const r = await fetch(cfg.url + '/auth/v1/settings', { headers: { apikey: cfg.key }, signal: ctl.signal }); clearTimeout(to);
+        const ms = Math.round(performance.now() - t0);
+        if (r.ok) {
+          add('اتصال', 'ok', 'سرور Supabase پاسخ می‌دهد', fmt(ms, 0) + ' میلی‌ثانیه');
+          try {
+            const j = await r.json();
+            if (j.disable_signup === false) add('امنیت', 'warn', 'ثبت‌نام عمومی باز است', 'هر کسی که آدرس و کلید را داشته باشد می‌تواند حساب بسازد و به اطلاعات برسد.', 'در Supabase: Authentication ← Sign In / Providers ← گزینه‌ی «Allow new users to sign up» را خاموش کن.');
+            else if (j.disable_signup === true) add('امنیت', 'ok', 'ثبت‌نام عمومی بسته است');
+          } catch (_) { /* ignore */ }
+        } else if (r.status === 401 || r.status === 403) add('اتصال', 'fail', 'کلید پذیرفته نشد (کد ' + r.status + ')', '', 'کلید anon/publishable را دوباره از Project Settings ← API کپی کن.');
+        else if (r.status === 404) add('اتصال', 'fail', 'آدرس پروژه پیدا نشد (۴۰۴)', '', 'آدرس باید همان Project URL باشد.');
+        else add('اتصال', 'fail', 'پاسخ غیرمنتظره از سرور (کد ' + r.status + ')');
+      } catch (e) {
+        add('اتصال', 'fail', 'ارتباط با سرور برقرار نشد', e && e.name === 'AbortError' ? 'مهلت پاسخ تمام شد' : String((e && e.message) || e),
+          'اینترنت یا VPN و آدرس پروژه را بررسی کن. اگر پروژه‌ی رایگانت چند روز بی‌استفاده بوده، ممکن است متوقف (paused) شده باشد؛ در داشبورد Supabase «Restore» بزن.');
+      }
+    }
+    if (!Store.sb && window.supabase && host && cfg.key) { try { Store.useSupabase(cfg.url, cfg.key); } catch (_) { /* ignore */ } }
+    let session = null;
+    if (Store.sb) { try { session = (await Store.sb.auth.getSession()).data.session; } catch (_) { /* ignore */ } }
+    if (session) add('حساب', 'ok', 'واردشده با', (session.user && session.user.email) || '');
+    else add('حساب', 'warn', 'هنوز وارد نشده‌ای', 'بررسی جدول‌ها فقط بعد از ورود ممکن است.', 'وارد شو و دوباره «بررسی کامل» را بزن.');
+    if (session) {
+      const seenFix = new Set();
+      for (const t of TABLES) {
+        try {
+          const { count, error } = await Store.sb.from(TBL(t)).select(EXPECT_COLS[t], { count: 'exact' }).limit(1);
+          if (error) throw error;
+          add('جدول‌ها', 'ok', TBL(t), fmt(count ?? 0, 0) + ' ردیف');
+        } catch (e) {
+          tablesOk = false;
+          const m = String((e && e.message) || e), c = String((e && e.code) || '');
+          let why = 'خطا', fix = '';
+          if (/PGRST204|42703/.test(c) || /column/i.test(m)) { why = 'یکی از ستون‌ها کم است'; fix = 'کد SQL را (تنظیمات ← راه‌اندازی دیتابیس) دوباره در SQL Editor پروژه‌ی Supabase اجرا کن.'; }
+          else if (/PGRST205|42P01/.test(c) || /does not exist|schema cache/i.test(m)) { why = 'جدول ساخته نشده'; fix = 'کد SQL را (تنظیمات ← راه‌اندازی دیتابیس) در SQL Editor «پروژه‌ی Supabase» اجرا کن؛ نه در Neon یا جای دیگر. بعد یک دقیقه صبر کن.'; }
+          else if (/42501/.test(c) || /permission|denied|row-level/i.test(m)) { why = 'دسترسی ندارد'; fix = 'کد SQL را دوباره اجرا کن؛ سیاست‌های دسترسی را می‌سازد.'; }
+          add('جدول‌ها', 'fail', TBL(t), why + ' — ' + m, seenFix.has(fix) ? '' : fix); seenFix.add(fix);
+        }
+      }
+      if (tablesOk) {
+        try {
+          const ins = await Store.sb.from(TBL('customers')).insert([{ name: '__healthcheck__' }]).select();
+          if (ins.error) throw ins.error;
+          const del = await Store.sb.from(TBL('customers')).delete().eq('id', ins.data[0].id);
+          if (del.error) add('جدول‌ها', 'warn', 'نوشتن ممکن است ولی حذف نه', String(del.error.message), 'مشتری آزمایشی «__healthcheck__» را دستی حذف کن و کد SQL را دوباره اجرا کن.');
+          else add('جدول‌ها', 'ok', 'تست نوشتن و حذف', 'یک ردیف آزمایشی ساخته و پاک شد');
+        } catch (e) { tablesOk = false; add('جدول‌ها', 'fail', 'نوشتن در دیتابیس ممکن نیست', String((e && e.message) || e), 'کد SQL را دوباره اجرا کن تا دسترسی و سیاست‌ها ساخته شوند.'); }
+      }
+    }
+  }
+  if (tablesOk && !S.loadError && S.screen === 'app') {
+    try { if (!local) await loadAll(); integrityChecks(add); } catch (e) { add('صحت اطلاعات', 'warn', 'بررسی اطلاعات کامل نشد', String((e && e.message) || e)); }
+  } else if (!tablesOk) add('صحت اطلاعات', 'info', 'بررسی صحت اطلاعات انجام نشد', 'اول مشکل‌های بالا را برطرف کن.');
+  return R;
+}
+const H_ICON = { ok: '✓', warn: '!', fail: '✗', info: 'i' };
+function healthHtml(R) {
+  const cnt = s => R.filter(r => r.status === s).length;
+  const head = cnt('fail') ? `<div class="err"><b>${fmt(cnt('fail'), 0)} خطا</b>${cnt('warn') ? ' و ' + fmt(cnt('warn'), 0) + ' هشدار' : ''} پیدا شد. راه‌حل هر مورد زیرش نوشته شده.</div>`
+    : cnt('warn') ? `<div class="notice">خطایی نیست؛ ${fmt(cnt('warn'), 0)} هشدار دارد.</div>` : '<div class="okbox">همه چیز سالم است ✓</div>';
+  const body = [...new Set(R.map(r => r.group))].map(g => `<h4 class="hg">${esc(g)}</h4>` + R.filter(r => r.group === g).map(r =>
+    `<div class="hrow"><span class="hi ${r.status}">${H_ICON[r.status]}</span><div><div>${esc(r.title)}</div>${r.detail ? `<div class="sub">${esc(r.detail)}</div>` : ''}${r.fix ? `<div class="hfix">${esc(r.fix)}</div>` : ''}</div></div>`).join('')).join('');
+  return head + body + `<div class="actions"><button class="btn primary sm" data-act="health">اجرای دوباره</button><button class="btn sm" data-act="health-copy">کپی گزارش</button><button class="btn sm" data-act="copy-sqlcheck">کپی SQL بررسی دیتابیس</button><button class="btn ghost sm" data-act="dlg-close">بستن</button></div>`;
+}
+function healthText(R) {
+  const T = { ok: 'OK', warn: 'هشدار', fail: 'خطا', info: 'اطلاع' };
+  return ['گزارش بررسی سلامت — ' + APP_BUILD + ' — ' + new Date().toLocaleString('fa-IR'), '', ...R.map(r => `[${T[r.status]}] ${r.group}: ${r.title}${r.detail ? ' — ' + r.detail : ''}${r.fix ? ' ⇒ ' + r.fix : ''}`)].join('\n');
+}
+async function openHealth() {
+  openDlg('<div class="dlg-body"><h3>بررسی سلامت</h3><div id="h-body"><div class="spin">در حال بررسی…</div></div></div>');
+  let R; try { R = await runHealth(); } catch (e) { R = [{ group: 'خطا', status: 'fail', title: 'بررسی کامل نشد', detail: String((e && e.message) || e), fix: '' }]; }
+  S.healthReport = R; const b = $('#h-body'); if (b) b.innerHTML = healthHtml(R);
+}
+
+/* ----- reset (step by step / full) ----- */
+const RESET_STEPS = [
+  { key: 'prices', title: 'تاریخچه‌ی قیمت مواد', note: 'قیمت فعلی مواد می‌ماند؛ فقط تاریخچه‌ی تغییر قیمت‌ها پاک می‌شود.',
+    tables: ['material_prices'], count: () => S.prices.length },
+  { key: 'payments', title: 'همه‌ی واریزی‌ها', note: 'مشتریان و سفارش‌ها می‌مانند.',
+    tables: ['payments'], count: () => S.payments.length },
+  { key: 'orders', title: 'همه‌ی سفارش‌ها', note: 'اقلام سفارش‌ها هم پاک می‌شود. مشتریان و محصولات می‌مانند.',
+    tables: ['order_items', 'orders'], count: () => S.orders.length,
+    blocked: () => (S.payments.some(p => p.order_id) ? 'اول «همه‌ی واریزی‌ها» را پاک کن، چون بعضی واریزی‌ها به سفارش‌ها وصل‌اند.' : '') },
+  { key: 'customers', title: 'همه‌ی مشتریان', note: 'مشخصات همه‌ی مشتریان پاک می‌شود.',
+    tables: ['customers'], count: () => S.customers.length,
+    blocked: () => (S.orders.length || S.payments.length ? 'اول واریزی‌ها و سفارش‌ها را پاک کن، چون به مشتریان وصل‌اند.' : '') },
+  { key: 'products', title: 'همه‌ی محصولات و دستور تهیه‌ها', note: 'مواد اولیه و قیمت‌هایشان می‌ماند.',
+    tables: ['recipe_items', 'products'], count: () => S.products.length,
+    blocked: () => (S.orderItems.length ? 'اول «همه‌ی سفارش‌ها» را پاک کن، چون سفارش‌ها به این محصولات وصل‌اند.' : '') },
+  { key: 'materials', title: 'همه‌ی مواد اولیه', note: 'تاریخچه‌ی قیمت مواد هم پاک می‌شود.',
+    tables: ['material_prices', 'materials'], count: () => S.materials.length,
+    blocked: () => (S.items.length ? 'اول «همه‌ی محصولات و دستور تهیه‌ها» را پاک کن، چون دستورها از این مواد استفاده می‌کنند.' : '') },
+  { key: 'about', title: 'اطلاعات «درباره ما»', note: 'نام تولیدی، لوگو و شبکه‌های اجتماعی پاک می‌شود. با «پاک کردن همه» پاک نمی‌شود.',
+    tables: ['business_profile'], count: () => (S.profRow ? 1 : 0) }
+];
+const RESET_ALL_TABLES = ['payments', 'order_items', 'orders', 'customers', 'recipe_items', 'material_prices', 'products', 'materials'];
+function resetPanel() {
+  const total = S.materials.length + S.products.length + S.prices.length + S.customers.length + S.orders.length + S.payments.length;
+  return `<section class="panel"><h3 style="font-size:15px">پاک‌سازی اطلاعات</h3>
+    <p class="muted" style="margin-top:2px">بخش‌ها را به ترتیب و جداگانه پاک کن، یا همه را یک‌جا پاک کن تا برنامه خام شود. این کار برگشت‌پذیر نیست؛ قبلش پشتیبان بگیر.</p>
+    <div class="list" style="margin-top:8px">${RESET_STEPS.map((st, i) => {
+      const n = st.count(), why = st.blocked ? st.blocked() : '';
+      return `<div class="item rs-row"><span><span class="name">${i + 1}. ${st.title}</span><br><span class="sub">${n ? fmt(n, 0) + ' مورد. ' : 'خالی است. '}${st.note}</span>${why && n ? `<br><span class="sub" style="color:var(--warn)">${why}</span>` : ''}</span>
+        <button class="btn sm danger" data-act="reset-open" data-k="${st.key}" ${!n || why ? 'disabled' : ''}>پاک کردن</button></div>`;
+    }).join('')}</div>
+    <div class="actions"><button class="btn dangerfill" data-act="reset-open" data-k="all" ${total ? '' : 'disabled'}>پاک کردن همه‌ی اطلاعات</button></div>
+    <p class="help">اتصال به دیتابیس و حساب کاربری تغییری نمی‌کند.</p>
+  </section>`;
+}
+function openReset(key) {
+  const all = key === 'all', st = RESET_STEPS.find(x => x.key === key);
+  if (!all && !st) return;
+  if (!all && st.blocked && st.blocked()) return toast(st.blocked());
+  const msg = all
+    ? 'همه‌ی مواد اولیه، محصولات، دستور تهیه‌ها و تاریخچه‌ی قیمت‌ها پاک می‌شوند و برنامه خام می‌شود.'
+    : `${st.note} (${fmt(st.count(), 0)} مورد)`;
+  openDlg(`<div class="dlg-body"><h3>${all ? 'پاک کردن همه‌ی اطلاعات' : 'پاک کردن: ' + st.title}</h3>
+    <p>${msg}</p>
+    <div class="notice">این کار برگشت‌پذیر نیست. اگر ممکن است اول یک پشتیبان بگیر.</div>
+    <button class="btn sm" data-act="exp-json">دانلود پشتیبان</button>
+    ${all ? '<label for="rs-word">برای تایید، عبارت «حذف همه» را بنویس</label><input id="rs-word" autocomplete="off">' : ''}
+    <div class="actions"><button class="btn dangerfill" data-act="reset-run" data-k="${key}">پاک کن</button>
+    <button class="btn ghost" data-act="dlg-close">انصراف</button></div></div>`);
+}
+async function resetRun(key) {
+  let tables;
+  if (key === 'all') {
+    const w = ($('#rs-word')?.value || '').trim().replace(/\s+/g, ' ');
+    if (w !== 'حذف همه') return toast('عبارت تایید را دقیق بنویس: حذف همه');
+    tables = RESET_ALL_TABLES;
+  } else {
+    const st = RESET_STEPS.find(x => x.key === key); if (!st) return;
+    if (st.blocked && st.blocked()) return toast(st.blocked());
+    tables = st.tables;
+  }
+  await guard(async () => {
+    for (const t of tables) await Store.clear(t);
+    S.calc.pid = ''; S.calc.mid = ''; S.q = ''; S.oq = ''; S.cq = ''; S.oView = null; S.cView = null;
+    await loadAll(); closeDlg(); render(); toast('پاک شد');
+  });
+}
+
+/* ---------- dialog ---------- */
+function openDlg(html) { const d = $('#dlg'); d.innerHTML = html; if (!d.open) d.showModal(); }
+function closeDlg() { const d = $('#dlg'); if (d.open) d.close(); D = null; }
+
+/* ---------- events ---------- */
+document.addEventListener('click', async e => {
+  if (e.target.id === 'dlg') return closeDlg();
+  const el = e.target.closest('[data-act]'); if (!el) return;
+  const a = el.dataset.act, id = el.dataset.id;
+  switch (a) {
+    case 'tab': S.oView = null; S.cView = null; S.tab = el.dataset.t; render(); window.scrollTo(0, 0); break;
+    case 'ord-new': openOrder(null, el.dataset.cid); break;
+    case 'ord-open': S.tab = 'orders'; S.ordMode = 'list'; S.oView = id; render(); window.scrollTo(0, 0); break;
+    case 'ord-back': S.oView = null; render(); window.scrollTo(0, 0); break;
+    case 'ord-edit': openOrder(id); break;
+    case 'ord-save': ordSave(); break;
+    case 'ord-del': ordDel(id); break;
+    case 'ord-mode': S.ordMode = el.dataset.v; render(); break;
+    case 'ord-filter': S.ordFilter = el.dataset.v; render(); break;
+    case 'plan-toggle': { const v = el.dataset.v, i = S.planSt.indexOf(v); if (i >= 0) S.planSt.splice(i, 1); else S.planSt.push(v); render(); break; }
+    case 'st-set': setStatus(id, el.dataset.v); break;
+    case 'ord-ship': openShip(id); break;
+    case 'ship-save': shipSave(id); break;
+    case 'o-addrow': OD.items.push(newRow()); $('#o-rows').innerHTML = orderRowsHtml(); updateOSum(); break;
+    case 'o-delrow': OD.items.splice(Number(el.dataset.i), 1); if (!OD.items.length) OD.items.push(newRow()); $('#o-rows').innerHTML = orderRowsHtml(); updateOSum(); break;
+    case 'ord-newcus': openCustomer(null, true); break;
+    case 'cus-new': openCustomer(null, false); break;
+    case 'cus-edit': openCustomer(id, false); break;
+    case 'cus-save': cusSave(id || null); break;
+    case 'cus-cancel': cusCancel(); break;
+    case 'cus-del': cusDel(id); break;
+    case 'cus-open': S.tab = 'customers'; S.cView = id; render(); window.scrollTo(0, 0); break;
+    case 'cus-back': S.cView = null; render(); window.scrollTo(0, 0); break;
+    case 'pay-new': openPayment(null, el.dataset.cid, el.dataset.oid); break;
+    case 'pay-edit': openPayment(id); break;
+    case 'pay-save': paySave(); break;
+    case 'pay-del': payDel(id); break;
+    case 'copy-order': copyText(orderText(orderById(id))); break;
+    case 'copy-invoice': copyText(invoiceText(orderById(id))); break;
+    case 'copy-plan': copyText(planText()); break;
+    case 'mp-save': mpSave(el); break;
+    case 'about-edit': openAbout(); break;
+    case 'about-save': aboutSave(); break;
+    case 'about-copy': copyText(aboutText()); break;
+    case 'logo-clear': PF.logo = ''; $('#pf-logo-prev').innerHTML = DEFAULT_LOGO; break;
+    case 'exp-ord': exportOrders(); break;
+    case 'exp-pay': exportPayments(); break;
+    case 'dlg-close': closeDlg(); break;
+    case 'retry': retryLoad(); break;
+    case 'health': openHealth(); break;
+    case 'health-copy': copyText(healthText(S.healthReport || [])); break;
+    case 'copy-sqlcheck': copyText(SQL_CHECK); break;
+    case 'copy-sql': copyText(SQL_SCHEMA); break;
+    case 'copy-calc': copyText(calcText()); break;
+    case 'cfg-save': {
+      const url = normUrl($('#cfg-url').value), key = $('#cfg-key').value.trim();
+      if (!/^https:\/\/.+/.test(url) || !key) return toast('آدرس (با https) و کلید را کامل وارد کن');
+      localStorage.setItem('kb_cfg', JSON.stringify({ url, key })); localStorage.removeItem('kb_mode'); boot(); break;
+    }
+    case 'use-local': localStorage.setItem('kb_mode', 'local'); boot(); break;
+    case 'goto-setup': S.screen = 'setup'; render(); break;
+    case 'goto-cloud': localStorage.removeItem('kb_mode'); boot(); break;
+    case 'logout': await Store.sb.auth.signOut(); S.screen = 'login'; render(); break;
+    case 'calc-mode': S.calc.mode = el.dataset.v; ensureCalcDefaults(); render(); break;
+    case 'chip': { const g = Number(el.dataset.g); S.calc.mode = 'product'; if (g >= 1000) { S.calc.weight = String(g / 1000); S.calc.unit = 'kg'; } else { S.calc.weight = String(g); S.calc.unit = 'g'; } render(); break; }
+    case 'mat-new': openMaterial(null); break;
+    case 'mat-edit': openMaterial(id); break;
+    case 'mat-save': matSave(id || null); break;
+    case 'mat-del': matDel(id); break;
+    case 'prod-new': openProduct(null); break;
+    case 'prod-edit': openProduct(id); break;
+    case 'prod-save': prodSave(); break;
+    case 'prod-dup': prodDup(id); break;
+    case 'prod-del': prodDel(id); break;
+    case 'd-addrow': D.rows.push({ mid: '', amount: '' }); $('#d-rows').innerHTML = rowsHtml(); break;
+    case 'd-delrow': D.rows.splice(Number(el.dataset.i), 1); if (!D.rows.length) D.rows.push({ mid: '', amount: '' }); $('#d-rows').innerHTML = rowsHtml(); updateSum(); break;
+    case 'reset-open': openReset(el.dataset.k); break;
+    case 'reset-run': resetRun(el.dataset.k); break;
+    case 'exp-json': exportJson(); break;
+    case 'exp-mat': exportMaterials(); break;
+    case 'exp-rec': exportRecipes(); break;
+  }
+});
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.mp !== undefined) { mpLive(t.closest('[data-mpscope]')); return; }
+  if (t.id === 'm-unit') { const l = $('#m-price-lbl'); if (l) l.textContent = 'قیمت هر ' + uLabel(t.value) + ' (تومان)'; return; }
+  if (t.dataset.bind) {
+    const k = t.dataset.bind;
+    if (k === 'q') { S.q = t.value; $('#mat-list').innerHTML = matListHtml(); return; }
+    if (k === 'oq') { S.oq = t.value; $('#ord-list').innerHTML = ordListHtml(); return; }
+    if (k === 'cq') { S.cq = t.value; $('#cus-list').innerHTML = cusListHtml(); return; }
+    if (k.startsWith('calc.')) {
+      const f = k.slice(5); S.calc[f] = t.value;
+      if (f === 'pid' || f === 'mid') { if (f === 'pid') S.calc.mid = ''; ensureCalcDefaults(); render(); } else renderCalcResult();
+    }
+    return;
+  }
+  if (t.dataset.d && D) { D[t.dataset.d] = t.value; if (t.dataset.d === 'base') updateSum(); return; }
+  if (t.dataset.row !== undefined && D) {
+    const r = D.rows[Number(t.dataset.row)], f = t.dataset.f; r[f] = t.value;
+    if (f === 'mid') { const m = matById(t.value); if (m && (uFam(r.unit) !== uFam(m.unit) || !String(r.amount).trim())) r.unit = defaultRowUnit(m); $('#d-rows').innerHTML = rowsHtml(); }
+    updateSum(); return;
+  }
+  if (t.dataset.o && OD) { OD[t.dataset.o] = t.value; if (t.dataset.o === 'fee' || t.dataset.o === 'discount') updateOSum(); return; }
+  if (t.dataset.orow !== undefined && OD) {
+    const r = OD.items[Number(t.dataset.orow)], f = t.dataset.f; r[f] = t.value;
+    if (f === 'pid') { const p = productById(t.value); r.price = p && Number(p.sale_price_per_kg) ? String(p.sale_price_per_kg) : ''; $('#o-rows').innerHTML = orderRowsHtml(); }
+    updateOSum(); return;
+  }
+  if (t.dataset.p && PD) {
+    const f = t.dataset.p; PD[f] = t.value;
+    if (f === 'customer_id') { PD.order_id = ''; renderPayDlg(); }
+    else if (f === 'order_id') { const o = orderById(t.value); if (o && !String(PD.amount).trim()) { const rm = orderTotals(o).remaining; if (rm > 0) PD.amount = String(Math.round(rm)); } renderPayDlg(); }
+  }
+});
+document.addEventListener('change', e => { if (e.target.id === 'pf-logo-file' && e.target.files[0]) { pickLogo(e.target.files[0]); return; } if (e.target.id === 'imp-file' && e.target.files[0]) { importJson(e.target.files[0]); e.target.value = ''; } });
+document.addEventListener('submit', async e => {
+  if (e.target.id !== 'login-form') return;
+  e.preventDefault();
+  const email = $('#lg-email').value.trim(), password = $('#lg-pass').value;
+  await guard(async () => {
+    const { data, error } = await Store.sb.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    S.user = data.user; enter();
+  });
+});
+
+boot();
+</script>
+</body>
+</html>
