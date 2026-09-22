@@ -312,6 +312,7 @@ function parseNum(v) {
   return Number(s);
 }
 const fmt = (n, d = 2) => new Intl.NumberFormat('fa-IR', { maximumFractionDigits: d }).format(n);
+const faNum = n => String(n).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
 const money = n => fmt(Math.round(n), 0) + ' تومان';
 function fmtWeight(g) {
   if (!isFinite(g)) return '—';
@@ -634,7 +635,7 @@ const S = {
   screen: 'loading', tab: 'orders', user: null, loadError: null, loading: false, q: '',
   materials: [], prices: [], products: [], items: [], customers: [], orders: [], orderItems: [], payments: [],
   profile: {}, profRow: null, oView: null, cView: null, ordMode: 'list', ordFilter: 'open', oq: '', cq: '', planSt: ['new', 'producing'],
-  rep: { from: '', to: '', status: 'delivered', cid: '' },
+  rep: { from: '', to: '', status: 'delivered', cid: '' }, repView: 'profit',
   calc: { pid: '', mode: 'product', weight: '1000', unit: 'g', mid: '', mamount: '', munit: 'g' }
 };
 let D = null;          // product dialog draft
@@ -727,7 +728,7 @@ const ICON = {
   about: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
   settings: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>'
 };
-const TABS = [['orders', 'سفارش‌ها'], ['reports', 'سود'], ['customers', 'مشتریان'], ['calc', 'ماشین‌حساب'], ['products', 'محصولات'], ['materials', 'مواد اولیه'], ['settings', 'تنظیمات'], ['about', 'درباره ما', 'wide']];
+const TABS = [['orders', 'سفارش‌ها'], ['reports', 'گزارش‌ها'], ['customers', 'مشتریان'], ['calc', 'ماشین‌حساب'], ['products', 'محصولات'], ['materials', 'مواد اولیه'], ['settings', 'تنظیمات'], ['about', 'درباره ما', 'wide']];
 
 /* ---------- render ---------- */
 function render() {
@@ -2034,8 +2035,9 @@ async function openHealth() {
 }
 
 
-/* ---------- reports: profit ---------- */
+/* ---------- reports ---------- */
 const REP_STATUS = [['delivered', 'تحویل‌شده'], ['open_delivered', 'در جریان + تحویل‌شده'], ['all', 'همه (بدون لغو‌شده)']];
+const REP_VIEWS = [['profit', 'سود'], ['debt', 'بدهی و بستانکاری'], ['byCustomer', 'به تفکیک مشتری'], ['byDate', 'به تفکیک تاریخ']];
 function reportOrders() {
   const r = S.rep, from = r.from.trim() ? jToIso(r.from) : null, to = r.to.trim() ? jToIso(r.to) : null;
   return S.orders.filter(o => {
@@ -2061,20 +2063,47 @@ function productProfitBreakdown(orders) {
   }));
   return [...map].map(([pid, e]) => ({ pid, name: productById(pid)?.name || '؟', ...e, profit: e.rev - e.cost })).sort((a, b) => b.profit - a.profit);
 }
-function viewReports() {
-  const r = S.rep, orders = reportOrders(), t = reportTotals(orders);
-  const cs = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
-  return `<div class="page-head"><h2>سود</h2><button class="btn sm" data-act="rep-export">خروجی Excel</button></div>
-  <section class="panel">
+function customerBreakdown(orders) {
+  const map = new Map();
+  orders.forEach(o => {
+    const t = orderTotals(o), e = map.get(o.customer_id) || { count: 0, rev: 0, cost: 0, profit: 0 };
+    e.count++; e.rev += t.itemsTotal; e.cost += t.cost; e.profit += t.profit; map.set(o.customer_id, e);
+  });
+  return [...map].map(([cid, e]) => ({ cid, name: customerById(cid)?.name || '؟', ...e })).sort((a, b) => b.rev - a.rev);
+}
+const FA_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+function dateBreakdown(orders) {
+  const map = new Map();
+  orders.forEach(o => {
+    const j = gToJ(isoToDate(o.order_date)), key = j[0] + '-' + pad2(j[1]);
+    const t = orderTotals(o), e = map.get(key) || { count: 0, rev: 0, cost: 0, profit: 0, y: j[0], m: j[1] };
+    e.count++; e.rev += t.itemsTotal; e.cost += t.cost; e.profit += t.profit; map.set(key, e);
+  });
+  return [...map].map(([key, e]) => ({ month: FA_MONTHS[e.m - 1] + ' ' + faNum(e.y), sortKey: key, ...e })).sort((a, b) => b.sortKey.localeCompare(a.sortKey));
+}
+function repFilterPanel(showCustomer) {
+  const r = S.rep, cs = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  return `<section class="panel">
     <div class="grid2"><div><label for="rp-from">از تاریخ</label><input id="rp-from" class="num" data-rp="from" value="${esc(r.from)}" placeholder="1405/06/01"></div>
     <div><label for="rp-to">تا تاریخ</label><input id="rp-to" class="num" data-rp="to" value="${esc(r.to)}" placeholder="خالی = تا امروز"></div></div>
     <div class="chips"><button class="chip" data-act="rep-quick" data-lb="این ماه">این ماه</button><button class="chip" data-act="rep-quick" data-lb="۳۰ روز اخیر">۳۰ روز اخیر</button><button class="chip" data-act="rep-quick" data-lb="همه">همه</button></div>
     <label for="rp-status">سفارش‌های در نظر گرفته‌شده</label><select id="rp-status" data-rp="status">${REP_STATUS.map(([k, tx]) => `<option value="${k}" ${k === r.status ? 'selected' : ''}>${tx}</option>`).join('')}</select>
-    <label for="rp-cid">مشتری</label><select id="rp-cid" data-rp="cid"><option value="">همه‌ی مشتریان</option>${cs.map(c => `<option value="${c.id}" ${c.id === r.cid ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+    ${showCustomer ? `<label for="rp-cid">مشتری</label><select id="rp-cid" data-rp="cid"><option value="">همه‌ی مشتریان</option>${cs.map(c => `<option value="${c.id}" ${c.id === r.cid ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>` : ''}
     <p class="help">سود از فروش منهای هزینه‌ی مواد در همان زمان سفارش و منهای تخفیف حساب می‌شود. هزینه‌ی ارسال چون معمولاً فقط هزینه‌ی پیک را پوشش می‌دهد، در سود حساب نمی‌شود.</p>
-  </section>
-  ${!orders.length ? '<div class="empty"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>' : `
-  <section class="panel">
+  </section>`;
+}
+function viewReports() {
+  const seg = `<div class="seg" role="group" aria-label="نوع گزارش">${REP_VIEWS.map(([k, t]) => `<button data-act="rep-view" data-v="${k}" class="${S.repView === k ? 'on' : ''}">${t}</button>`).join('')}</div>`;
+  const body = { profit: viewRepProfit, debt: viewRepDebt, byCustomer: viewRepByCustomer, byDate: viewRepByDate }[S.repView]();
+  return `<div class="page-head"><h2>گزارش‌ها</h2></div>${seg}${body}`;
+}
+
+/* ----- سود ----- */
+function viewRepProfit() {
+  const r = S.rep, orders = reportOrders(), t = reportTotals(orders);
+  return `${repFilterPanel(true)}
+  ${!orders.length ? '<div class="empty" style="margin-top:12px"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>' : `
+  <section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 8px"><h3 style="font-size:15px">خلاصه‌ی سود</h3><button class="btn sm" data-act="rep-export">خروجی Excel</button></div>
     <div class="stat"><div><span class="muted">تعداد سفارش</span><b>${fmt(t.count, 0)}</b></div><div><span class="muted">جمع فروش</span><b>${money(t.rev)}</b></div>
     <div><span class="muted">هزینه‌ی مواد</span><b>${money(t.cost)}</b></div><div><span class="muted">سود</span><b class="${t.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(t.profit)}${t.margin != null ? ' (' + fmt(Math.round(t.margin * 100), 0) + '٪)' : ''}</b></div></div>
   </section>
@@ -2100,6 +2129,62 @@ function exportReport() {
   const tt = reportTotals(orders);
   rows.push(['جمع', '', '', '', Math.round(tt.rev), Math.round(tt.cost), Math.round(tt.disc), Math.round(tt.profit), tt.margin != null ? Math.round(tt.margin * 100) : '']);
   download('profit-report.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+
+/* ----- بدهی و بستانکاری ----- */
+function debtRows() {
+  return S.customers.map(c => ({ c, ...customerStats(c.id) })).filter(x => Math.abs(x.balance) > 0.5);
+}
+function viewRepDebt() {
+  const rows = debtRows(), debtors = rows.filter(x => x.balance > 0).sort((a, b) => b.balance - a.balance), creditors = rows.filter(x => x.balance < 0).sort((a, b) => a.balance - b.balance);
+  const totalDebt = sumBy(debtors, x => x.balance), totalCredit = sumBy(creditors, x => -x.balance);
+  const row = x => `<button class="item" data-act="cus-open" data-id="${x.c.id}"><span><span class="name">${esc(x.c.name)}</span><br><span class="sub">${fmt(x.count, 0)} سفارش${x.c.phone ? ' — <span dir="ltr">' + esc(x.c.phone) + '</span>' : ''}</span></span>${balanceBadge(x.balance)}</button>`;
+  return `<section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 8px"><h3 style="font-size:15px">وضعیت فعلی حساب مشتریان</h3><button class="btn sm" data-act="rep-export-debt">خروجی Excel</button></div>
+    <div class="stat"><div><span class="muted">جمع طلب از مشتریان</span><b class="profit-neg">${money(totalDebt)}</b></div><div><span class="muted">جمع بستانکاری مشتریان</span><b class="profit-pos">${money(totalCredit)}</b></div>
+    <div><span class="muted">مشتری بدهکار</span><b>${fmt(debtors.length, 0)}</b></div><div><span class="muted">مشتری بستانکار</span><b>${fmt(creditors.length, 0)}</b></div></div>
+    <p class="help">این گزارش وضعیت فعلی است، نه محدود به یک بازه‌ی تاریخی؛ از جمع سفارش‌های تسویه‌نشده و واریزی‌های هر مشتری به دست می‌آید.</p></section>
+  ${!rows.length ? '<div class="empty"><p style="margin:0">همه‌ی مشتریان تسویه‌اند.</p></div>' : `
+  ${debtors.length ? `<h3 style="font-size:16px;margin:16px 0 8px">بدهکاران (${fmt(debtors.length, 0)})</h3><div class="list">${debtors.map(row).join('')}</div>` : ''}
+  ${creditors.length ? `<h3 style="font-size:16px;margin:16px 0 8px">بستانکاران (${fmt(creditors.length, 0)})</h3><div class="list">${creditors.map(row).join('')}</div>` : ''}`}`;
+}
+function exportDebt() {
+  const rows = [['مشتری', 'تلفن', 'تعداد سفارش', 'جمع خرید', 'جمع پرداختی', 'وضعیت']];
+  debtRows().sort((a, b) => b.balance - a.balance).forEach(x => rows.push([x.c.name, x.c.phone || '', x.count, Math.round(x.sales), Math.round(x.paid), x.balance > 0.5 ? 'بدهکار ' + Math.round(x.balance) : 'بستانکار ' + Math.round(-x.balance)]));
+  download('debt-report.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+
+/* ----- به تفکیک مشتری ----- */
+function viewRepByCustomer() {
+  const orders = reportOrders(), rows = customerBreakdown(orders), t = reportTotals(orders);
+  return `${repFilterPanel(false)}
+  ${!rows.length ? '<div class="empty" style="margin-top:12px"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>' : `
+  <section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 8px"><h3 style="font-size:15px">جمع کل</h3><button class="btn sm" data-act="rep-export-cust">خروجی Excel</button></div>
+    <div class="stat"><div><span class="muted">تعداد مشتری</span><b>${fmt(rows.length, 0)}</b></div><div><span class="muted">تعداد سفارش</span><b>${fmt(t.count, 0)}</b></div><div><span class="muted">جمع فروش</span><b>${money(t.rev)}</b></div><div><span class="muted">سود</span><b class="${t.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(t.profit)}</b></div></div>
+  </section>
+  <div class="list" style="margin-top:12px">${rows.map(x => `<button class="item" data-act="cus-open" data-id="${x.cid}"><span><span class="name">${esc(x.name)}</span><br><span class="sub">${fmt(x.count, 0)} سفارش — هزینه‌ی مواد ${money(x.cost)}</span></span>
+    <span class="side"><span class="tag">${money(x.rev)}</span><span class="sub ${x.profit >= 0 ? 'profit-pos' : 'profit-neg'}">سود ${money(x.profit)}</span></span></button>`).join('')}</div>`}`;
+}
+function exportByCustomer() {
+  const rows = [['مشتری', 'تعداد سفارش', 'جمع فروش', 'هزینه‌ی مواد', 'سود']];
+  customerBreakdown(reportOrders()).forEach(x => rows.push([x.name, x.count, Math.round(x.rev), Math.round(x.cost), Math.round(x.profit)]));
+  download('orders-by-customer.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+
+/* ----- به تفکیک تاریخ (ماهانه) ----- */
+function viewRepByDate() {
+  const orders = reportOrders(), rows = dateBreakdown(orders), t = reportTotals(orders);
+  return `${repFilterPanel(false)}
+  ${!rows.length ? '<div class="empty" style="margin-top:12px"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>' : `
+  <section class="panel" style="margin-top:12px"><div class="page-head" style="margin:0 0 8px"><h3 style="font-size:15px">جمع کل</h3><button class="btn sm" data-act="rep-export-date">خروجی Excel</button></div>
+    <div class="stat"><div><span class="muted">تعداد ماه</span><b>${fmt(rows.length, 0)}</b></div><div><span class="muted">تعداد سفارش</span><b>${fmt(t.count, 0)}</b></div><div><span class="muted">جمع فروش</span><b>${money(t.rev)}</b></div><div><span class="muted">سود</span><b class="${t.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(t.profit)}</b></div></div>
+  </section>
+  <div class="list" style="margin-top:12px">${rows.map(x => `<div class="item" style="cursor:default"><span><span class="name">${esc(x.month)}</span><br><span class="sub">${fmt(x.count, 0)} سفارش — هزینه‌ی مواد ${money(x.cost)}</span></span>
+    <span class="side"><span class="tag">${money(x.rev)}</span><span class="sub ${x.profit >= 0 ? 'profit-pos' : 'profit-neg'}">سود ${money(x.profit)}</span></span></div>`).join('')}</div>`}`;
+}
+function exportByDate() {
+  const rows = [['ماه', 'تعداد سفارش', 'جمع فروش', 'هزینه‌ی مواد', 'سود']];
+  dateBreakdown(reportOrders()).forEach(x => rows.push([x.month, x.count, Math.round(x.rev), Math.round(x.cost), Math.round(x.profit)]));
+  download('orders-by-month.csv', toCsv(rows), 'text/csv;charset=utf-8');
 }
 
 /* ----- reset (step by step / full) ----- */
@@ -2218,7 +2303,11 @@ document.addEventListener('click', async e => {
     case 'exp-ord': exportOrders(); break;
     case 'exp-pay': exportPayments(); break;
     case 'rep-quick': { const q = el.dataset.lb; if (q === 'این ماه') { const j = gToJ(new Date()); S.rep.from = j[0] + '/' + pad2(j[1]) + '/01'; S.rep.to = ''; } else if (q === '۳۰ روز اخیر') { S.rep.from = isoToJ(dateToIso(new Date(Date.now() - 29 * 86400000))); S.rep.to = isoToJ(todayIso()); } else { S.rep.from = ''; S.rep.to = ''; } render(); break; }
+    case 'rep-view': S.repView = el.dataset.v; render(); break;
     case 'rep-export': exportReport(); break;
+    case 'rep-export-debt': exportDebt(); break;
+    case 'rep-export-cust': exportByCustomer(); break;
+    case 'rep-export-date': exportByDate(); break;
     case 'dlg-close': closeDlg(); break;
     case 'retry': retryLoad(); break;
     case 'health': openHealth(); break;
