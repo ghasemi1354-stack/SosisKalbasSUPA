@@ -147,6 +147,7 @@ textarea{resize:vertical}
 }
 .tag{position:relative;background:var(--tag);color:var(--tag-ink);font-weight:800;padding:1px 12px 1px 12px;padding-inline-start:22px;
   border-radius:4px 12px 12px 4px;white-space:nowrap;font-size:14px}
+.tag.tag-neg{background:var(--brand-soft);color:var(--brand-strong)}
 .tag::before{content:"";position:absolute;inset-inline-start:8px;top:50%;width:6px;height:6px;margin-top:-3px;border-radius:50%;
   background:var(--surface);box-shadow:inset 0 0 0 1px rgba(0,0,0,.18)}
 .badge{display:inline-block;font-size:12px;padding:0 9px;border-radius:99px;background:var(--warn-soft);color:var(--warn)}
@@ -633,6 +634,7 @@ const S = {
   screen: 'loading', tab: 'orders', user: null, loadError: null, loading: false, q: '',
   materials: [], prices: [], products: [], items: [], customers: [], orders: [], orderItems: [], payments: [],
   profile: {}, profRow: null, oView: null, cView: null, ordMode: 'list', ordFilter: 'open', oq: '', cq: '', planSt: ['new', 'producing'],
+  rep: { from: '', to: '', status: 'delivered', cid: '' },
   calc: { pid: '', mode: 'product', weight: '1000', unit: 'g', mid: '', mamount: '', munit: 'g' }
 };
 let D = null;          // product dialog draft
@@ -721,10 +723,11 @@ const ICON = {
   customers: '<svg class="i" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 5.2a3 3 0 010 5.6M18 14.5c1.8.8 3 2.6 3 5"/></svg>',
   products: '<svg class="i" viewBox="0 0 24 24"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"/></svg>',
   materials: '<svg class="i" viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4-9-4zM3 7v10l9 4 9-4V7M12 11v10"/></svg>',
+  reports: '<svg class="i" viewBox="0 0 24 24"><path d="M4 19V10M11 19V5M18 19v-7"/><path d="M3 19h18"/></svg>',
   about: '<svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></svg>',
   settings: '<svg class="i" viewBox="0 0 24 24"><path d="M4 6h8M18 6h2M4 12h2M12 12h8M4 18h10M20 18h0"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>'
 };
-const TABS = [['orders', 'سفارش‌ها'], ['customers', 'مشتریان'], ['calc', 'ماشین‌حساب'], ['products', 'محصولات'], ['materials', 'مواد اولیه'], ['settings', 'تنظیمات'], ['about', 'درباره ما', 'wide']];
+const TABS = [['orders', 'سفارش‌ها'], ['reports', 'سود'], ['customers', 'مشتریان'], ['calc', 'ماشین‌حساب'], ['products', 'محصولات'], ['materials', 'مواد اولیه'], ['settings', 'تنظیمات'], ['about', 'درباره ما', 'wide']];
 
 /* ---------- render ---------- */
 function render() {
@@ -733,7 +736,7 @@ function render() {
   if (S.screen === 'loading') { app.innerHTML = '<div class="awning"></div><div class="spin">در حال بارگذاری…</div>'; return; }
   if (S.screen === 'setup') { app.innerHTML = '<div class="awning"></div>' + viewSetup(); return; }
   if (S.screen === 'login') { app.innerHTML = '<div class="awning"></div>' + viewLogin(); return; }
-  const views = { orders: viewOrders, customers: viewCustomers, calc: viewCalc, products: viewProducts, materials: viewMaterials, settings: viewSettings, about: viewAbout };
+  const views = { orders: viewOrders, reports: viewReports, customers: viewCustomers, calc: viewCalc, products: viewProducts, materials: viewMaterials, settings: viewSettings, about: viewAbout };
   let body;
   if (S.loading) body = '<div class="spin">در حال دریافت اطلاعات…</div>';
   else if (S.loadError && S.tab !== 'settings') body = viewLoadError();
@@ -1285,9 +1288,13 @@ const sumBy = (arr, f) => arr.reduce((a, x) => a + (Number(f(x)) || 0), 0);
 function orderTotals(o) {
   const its = itemsOfOrder(o.id);
   const itemsTotal = sumBy(its, i => (Number(i.weight_g) / 1000) * Number(i.price_per_kg));
+  const cost = sumBy(its, i => (Number(i.weight_g) / 1000) * Number(i.cost_per_kg));
   const fee = Number(o.delivery_fee) || 0, discount = Number(o.discount) || 0;
   const total = itemsTotal + fee - discount, paid = sumBy(paymentsOfOrder(o.id), p => p.amount);
-  return { itemsTotal, fee, discount, total, paid, remaining: total - paid, weight: sumBy(its, i => i.weight_g) };
+  // سود سفارش: فروش اقلام منهای هزینه‌ی مواد (با قیمت مواد در همان زمان سفارش) منهای تخفیف.
+  // هزینه‌ی ارسال جزو سود حساب نمی‌شود چون معمولاً فقط پوشش‌دهنده‌ی هزینه‌ی پیک است، نه سود تولید.
+  const profit = itemsTotal - cost - discount;
+  return { itemsTotal, cost, fee, discount, total, paid, remaining: total - paid, weight: sumBy(its, i => i.weight_g), profit, margin: itemsTotal > 0 ? profit / itemsTotal : null };
 }
 function payState(o) {
   const t = orderTotals(o);
@@ -1297,7 +1304,8 @@ function payState(o) {
 function customerStats(cid) {
   const orders = S.orders.filter(o => o.customer_id === cid && o.status !== 'canceled');
   const sales = sumBy(orders, o => orderTotals(o).total), paid = sumBy(S.payments.filter(p => p.customer_id === cid), p => p.amount);
-  return { count: orders.length, sales, paid, balance: sales - paid };
+  const profit = sumBy(orders, o => orderTotals(o).profit);
+  return { count: orders.length, sales, paid, balance: sales - paid, profit };
 }
 function itemsSummary(o) {
   return itemsOfOrder(o.id).map(i => (productById(i.product_id)?.name || '؟') + ' ' + fmtWeight(Number(i.weight_g))).join('، ');
@@ -1529,14 +1537,18 @@ function viewOrderDetail() {
   </section>
 
   <section class="panel"><h3 style="font-size:15px">اقلام و مبلغ</h3>
-    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>محصول</th><th>وزن</th><th>قیمت هر کیلو</th><th>مبلغ</th></tr></thead><tbody>
-    ${its.map(i => `<tr><td>${esc(productById(i.product_id)?.name || '؟')}</td><td class="n">${fmtWeight(Number(i.weight_g))}</td><td class="n">${money(Number(i.price_per_kg))}</td><td class="n">${money((Number(i.weight_g) / 1000) * Number(i.price_per_kg))}</td></tr>`).join('')}
+    <div style="overflow-x:auto"><table class="tbl"><thead><tr><th>محصول</th><th>وزن</th><th>قیمت هر کیلو</th><th>مبلغ</th><th>هزینه‌ی مواد</th></tr></thead><tbody>
+    ${its.map(i => `<tr><td>${esc(productById(i.product_id)?.name || '؟')}</td><td class="n">${fmtWeight(Number(i.weight_g))}</td><td class="n">${money(Number(i.price_per_kg))}</td><td class="n">${money((Number(i.weight_g) / 1000) * Number(i.price_per_kg))}</td><td class="n muted">${Number(i.cost_per_kg) > 0 ? money((Number(i.weight_g) / 1000) * Number(i.cost_per_kg)) : '—'}</td></tr>`).join('')}
     </tbody></table></div>
     <div class="sum" style="margin-top:10px">
       <div class="line"><span>جمع اقلام</span><span class="fill"></span><span class="amt">${money(t.itemsTotal)}</span></div>
       ${t.fee ? `<div class="line"><span>هزینه ارسال</span><span class="fill"></span><span class="amt">${money(t.fee)}</span></div>` : ''}
       ${t.discount ? `<div class="line"><span>تخفیف</span><span class="fill"></span><span class="amt">${money(t.discount)}</span></div>` : ''}
-      <div class="line"><span>مبلغ نهایی</span><span class="fill"></span><span class="tag">${money(t.total)}</span></div></div>
+      <div class="line"><span>مبلغ نهایی</span><span class="fill"></span><span class="tag">${money(t.total)}</span></div>
+      <div class="tear" style="margin:6px 0"></div>
+      <div class="line"><span>هزینه‌ی مواد</span><span class="fill"></span><span class="amt">${money(t.cost)}</span></div>
+      <div class="line big"><span>سود سفارش</span><span class="fill"></span><span class="amt big ${t.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(t.profit)}${t.margin != null ? ' (' + fmt(Math.round(t.margin * 100), 0) + '٪)' : ''}</span></div></div>
+    <p class="help">هزینه‌ی مواد از قیمتی که هنگام ثبت سفارش ذخیره شده حساب می‌شود؛ اگر بعداً از بخش «مواد لازم» قیمت را اصلاح کنی، همین‌جا هم به‌روز می‌شود. هزینه‌ی ارسال در سود حساب نمی‌شود.</p>
   </section>
 
   <section class="panel"><div class="page-head" style="margin:0 0 6px"><h3 style="font-size:15px">واریزی‌ها</h3><button class="btn sm primary" data-act="pay-new" data-cid="${o.customer_id}" data-oid="${o.id}">+ ثبت واریزی</button></div>
@@ -2021,6 +2033,75 @@ async function openHealth() {
   S.healthReport = R; const b = $('#h-body'); if (b) b.innerHTML = healthHtml(R);
 }
 
+
+/* ---------- reports: profit ---------- */
+const REP_STATUS = [['delivered', 'تحویل‌شده'], ['open_delivered', 'در جریان + تحویل‌شده'], ['all', 'همه (بدون لغو‌شده)']];
+function reportOrders() {
+  const r = S.rep, from = r.from.trim() ? jToIso(r.from) : null, to = r.to.trim() ? jToIso(r.to) : null;
+  return S.orders.filter(o => {
+    if (o.status === 'canceled') return false;
+    if (r.status === 'delivered' && o.status !== 'delivered') return false;
+    if (r.status === 'open_delivered' && !(o.status === 'delivered' || OPEN_STATUSES.includes(o.status))) return false;
+    if (r.cid && o.customer_id !== r.cid) return false;
+    if (from && o.order_date < from) return false;
+    if (to && o.order_date > to) return false;
+    return true;
+  }).sort((a, b) => (Number(b.order_no) || 0) - (Number(a.order_no) || 0));
+}
+function reportTotals(orders) {
+  const rev = sumBy(orders, o => orderTotals(o).itemsTotal), cost = sumBy(orders, o => orderTotals(o).cost),
+    disc = sumBy(orders, o => orderTotals(o).discount), fee = sumBy(orders, o => orderTotals(o).fee), profit = sumBy(orders, o => orderTotals(o).profit);
+  return { count: orders.length, rev, cost, disc, fee, profit, margin: rev > 0 ? profit / rev : null };
+}
+function productProfitBreakdown(orders) {
+  const map = new Map();
+  orders.forEach(o => itemsOfOrder(o.id).forEach(i => {
+    const rev = (Number(i.weight_g) / 1000) * Number(i.price_per_kg), cost = (Number(i.weight_g) / 1000) * Number(i.cost_per_kg);
+    const e = map.get(i.product_id) || { weight: 0, rev: 0, cost: 0 }; e.weight += Number(i.weight_g); e.rev += rev; e.cost += cost; map.set(i.product_id, e);
+  }));
+  return [...map].map(([pid, e]) => ({ pid, name: productById(pid)?.name || '؟', ...e, profit: e.rev - e.cost })).sort((a, b) => b.profit - a.profit);
+}
+function viewReports() {
+  const r = S.rep, orders = reportOrders(), t = reportTotals(orders);
+  const cs = [...S.customers].sort((a, b) => a.name.localeCompare(b.name, 'fa'));
+  return `<div class="page-head"><h2>سود</h2><button class="btn sm" data-act="rep-export">خروجی Excel</button></div>
+  <section class="panel">
+    <div class="grid2"><div><label for="rp-from">از تاریخ</label><input id="rp-from" class="num" data-rp="from" value="${esc(r.from)}" placeholder="1405/06/01"></div>
+    <div><label for="rp-to">تا تاریخ</label><input id="rp-to" class="num" data-rp="to" value="${esc(r.to)}" placeholder="خالی = تا امروز"></div></div>
+    <div class="chips"><button class="chip" data-act="rep-quick" data-lb="این ماه">این ماه</button><button class="chip" data-act="rep-quick" data-lb="۳۰ روز اخیر">۳۰ روز اخیر</button><button class="chip" data-act="rep-quick" data-lb="همه">همه</button></div>
+    <label for="rp-status">سفارش‌های در نظر گرفته‌شده</label><select id="rp-status" data-rp="status">${REP_STATUS.map(([k, tx]) => `<option value="${k}" ${k === r.status ? 'selected' : ''}>${tx}</option>`).join('')}</select>
+    <label for="rp-cid">مشتری</label><select id="rp-cid" data-rp="cid"><option value="">همه‌ی مشتریان</option>${cs.map(c => `<option value="${c.id}" ${c.id === r.cid ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select>
+    <p class="help">سود از فروش منهای هزینه‌ی مواد در همان زمان سفارش و منهای تخفیف حساب می‌شود. هزینه‌ی ارسال چون معمولاً فقط هزینه‌ی پیک را پوشش می‌دهد، در سود حساب نمی‌شود.</p>
+  </section>
+  ${!orders.length ? '<div class="empty"><p style="margin:0">سفارشی با این فیلتر پیدا نشد.</p></div>' : `
+  <section class="panel">
+    <div class="stat"><div><span class="muted">تعداد سفارش</span><b>${fmt(t.count, 0)}</b></div><div><span class="muted">جمع فروش</span><b>${money(t.rev)}</b></div>
+    <div><span class="muted">هزینه‌ی مواد</span><b>${money(t.cost)}</b></div><div><span class="muted">سود</span><b class="${t.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(t.profit)}${t.margin != null ? ' (' + fmt(Math.round(t.margin * 100), 0) + '٪)' : ''}</b></div></div>
+  </section>
+  <details open><summary>سود به تفکیک محصول</summary><section class="panel">
+    ${productProfitBreakdown(orders).map(x => `<div class="line"><span>${esc(x.name)}</span><span class="fill"></span><span class="amt ${x.profit >= 0 ? 'profit-pos' : 'profit-neg'}">${money(x.profit)}</span></div>`).join('')}
+    ${t.disc ? `<p class="help">این جدول تخفیف سفارش‌ها را کم نمی‌کند چون تخفیف مال کل سفارش است، نه یک محصول مشخص؛ به همین خاطر جمعش (${money(t.rev - t.cost)}) با سود کل (${money(t.profit)}) به اندازه‌ی مجموع تخفیف‌ها (${money(t.disc)}) فرق دارد.</p>` : ''}
+  </section></details>
+  <h3 style="font-size:16px;margin:16px 0 8px">سود به تفکیک سفارش</h3>
+  <div class="list">${orders.map(o => { const ot = orderTotals(o), c = customerById(o.customer_id); return `<button class="item" data-act="ord-open" data-id="${o.id}">
+      <span><span class="name">سفارش ${fmt(o.order_no || 0, 0)}: ${esc(c?.name || '؟')}</span><br><span class="sub">${fmtIso(o.order_date)} — ${esc(itemsSummary(o))}</span></span>
+      <span class="side"><span class="tag ${ot.profit >= 0 ? '' : 'tag-neg'}">${money(ot.profit)}</span><span class="badges"><span class="st st-${o.status}">${stLabel(o.status)}</span></span></span></button>`; }).join('')}</div>`}`;
+}
+function repText() {
+  const orders = reportOrders(), t = reportTotals(orders);
+  return `گزارش سود — از ${S.rep.from || 'ابتدا'} تا ${S.rep.to || 'امروز'}\nتعداد سفارش: ${fmt(t.count, 0)} — فروش: ${money(t.rev)} — هزینه‌ی مواد: ${money(t.cost)} — سود: ${money(t.profit)}\n\nبه تفکیک محصول:\n`
+    + productProfitBreakdown(orders).map(x => `- ${x.name}: ${money(x.profit)}`).join('\n') + '\n\nبه تفکیک سفارش:\n'
+    + orders.map(o => `سفارش ${fmt(o.order_no || 0, 0)} (${customerById(o.customer_id)?.name || '؟'}, ${fmtIso(o.order_date)}): ${money(orderTotals(o).profit)}`).join('\n');
+}
+function exportReport() {
+  const orders = reportOrders();
+  const rows = [['شماره سفارش', 'تاریخ', 'مشتری', 'وضعیت', 'فروش', 'هزینه‌ی مواد', 'تخفیف', 'سود', 'حاشیه سود ٪']];
+  orders.forEach(o => { const t = orderTotals(o); rows.push([o.order_no, isoToJ(o.order_date), customerById(o.customer_id)?.name || '', stLabel(o.status), Math.round(t.itemsTotal), Math.round(t.cost), Math.round(t.discount), Math.round(t.profit), t.margin != null ? Math.round(t.margin * 100) : '']); });
+  const tt = reportTotals(orders);
+  rows.push(['جمع', '', '', '', Math.round(tt.rev), Math.round(tt.cost), Math.round(tt.disc), Math.round(tt.profit), tt.margin != null ? Math.round(tt.margin * 100) : '']);
+  download('profit-report.csv', toCsv(rows), 'text/csv;charset=utf-8');
+}
+
 /* ----- reset (step by step / full) ----- */
 const RESET_STEPS = [
   { key: 'prices', title: 'تاریخچه‌ی قیمت مواد', note: 'قیمت فعلی مواد می‌ماند؛ فقط تاریخچه‌ی تغییر قیمت‌ها پاک می‌شود.',
@@ -2136,6 +2217,8 @@ document.addEventListener('click', async e => {
     case 'logo-clear': PF.logo = ''; $('#pf-logo-prev').innerHTML = DEFAULT_LOGO; break;
     case 'exp-ord': exportOrders(); break;
     case 'exp-pay': exportPayments(); break;
+    case 'rep-quick': { const q = el.dataset.lb; if (q === 'این ماه') { const j = gToJ(new Date()); S.rep.from = j[0] + '/' + pad2(j[1]) + '/01'; S.rep.to = ''; } else if (q === '۳۰ روز اخیر') { S.rep.from = isoToJ(dateToIso(new Date(Date.now() - 29 * 86400000))); S.rep.to = isoToJ(todayIso()); } else { S.rep.from = ''; S.rep.to = ''; } render(); break; }
+    case 'rep-export': exportReport(); break;
     case 'dlg-close': closeDlg(); break;
     case 'retry': retryLoad(); break;
     case 'health': openHealth(); break;
@@ -2199,6 +2282,7 @@ document.addEventListener('input', e => {
     if (f === 'pid') { const p = productById(t.value); r.price = p && Number(p.sale_price_per_kg) ? String(p.sale_price_per_kg) : ''; $('#o-rows').innerHTML = orderRowsHtml(); }
     updateOSum(); return;
   }
+  if (t.dataset.rp) { S.rep[t.dataset.rp] = t.value; render(); return; }
   if (t.dataset.p && PD) {
     const f = t.dataset.p; PD[f] = t.value;
     if (f === 'customer_id') { PD.order_id = ''; renderPayDlg(); }
